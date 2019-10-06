@@ -34,8 +34,8 @@ applying Bayes' theorem with strong (naive) feature independence assumptions.</p
 <pre><code class="python"># -*- coding: utf-8 -*-
 
 &#34;&#34;&#34;
-The `mixed_naive_bayes` module implements Categorical and Gaussian 
-Naive Bayes algorithms. These are supervised learning methods based on 
+The `mixed_naive_bayes` module implements Categorical and Gaussian
+Naive Bayes algorithms. These are supervised learning methods based on
 applying Bayes&#39; theorem with strong (naive) feature independence assumptions.
 
 The API&#39;s design is similar to scikit-learn&#39;s.
@@ -50,7 +50,8 @@ import logging
 import numpy as np
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format=&#39;%(funcName)s: %(message)s&#39;)
+# logging.basicConfig(level=logging.DEBUG, format=&#39;%(funcName)s: %(message)s&#39;)
+logging.basicConfig(level=logging.INFO, format=&#39;%(message)s&#39;)
 
 
 _EPSILON = 1e-8
@@ -67,6 +68,7 @@ class NotFittedError(Exception):
     Exception class for cases when the predict API is called before
     model is fitted.
     &#34;&#34;&#34;
+
     def __str__(self):
         return &#34;This MixedNB instance is not fitted yet. Call &#39;fit&#39; \
             with appropriate arguments before using this method.&#34;
@@ -81,20 +83,20 @@ def load_example():
           [178, 63], [174, 69], [166, 60],
           [167, 59], [165, 60], [173, 68],
           [178, 71]]
-    # X = [[0, 0, 180, 75],
-    #      [1, 1, 165, 61],
-    #      [1, 0, 167, 62],
-    #      [0, 1, 178, 63],
-    #      [1, 1, 174, 69],
-    #      [2, 1, 166, 60],
-    #      [0, 2, 167, 59],
-    #      [2, 2, 165, 60],
-    #      [1, 1, 173, 68],
-    #      [0, 2, 178, 71]]
-    # y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
-    X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
-         [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
-    y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
+    X = [[0, 0, 180, 75],
+         [1, 1, 165, 61],
+         [1, 0, 167, 62],
+         [0, 1, 178, 63],
+         [1, 1, 174, 69],
+         [2, 1, 166, 60],
+         [0, 2, 167, 59],
+         [2, 2, 165, 60],
+         [1, 1, 173, 68],
+         [0, 2, 178, 71]]
+    y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
+    # X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
+    #      [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
+    # y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
     X = np.array(X)
     y = np.array(y)
 
@@ -105,9 +107,12 @@ class MixedNB():
     &#34;&#34;&#34;
     Naive Bayes classifier for categorical and Gaussian models.
 
+    Note: MixedNB expects that for each feature, all possible classes
+    are in the dataset or encoded.
+
     Parameters
     ----------
-    alpha : float, optional (default=0)
+    alpha : non-negative float, optional (default=0)
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
         This is for features with categorical distribution.
     priors : array-like, shape (n_classes,)
@@ -144,7 +149,7 @@ class MixedNB():
     &gt;&gt;&gt; y = np.array(y)
     &gt;&gt;&gt; clf = MixedNB()
     &gt;&gt;&gt; clf.fit(X, y, categorical_features=[0, 1])
-    &gt;&gt;&gt; print(clf.predict_proba([[0, 0], [1, 1]]))
+    &gt;&gt;&gt; print(clf.predict([[0, 0]]))
     &#34;&#34;&#34;
 
     def __init__(self, alpha=0.0):
@@ -155,7 +160,7 @@ class MixedNB():
         self.models = {}
         self._is_fitted = False
 
-    def fit(self, X, y, categorical_features, verbose=True):
+    def fit(self, X, y, categorical_features, verbose=False):
         &#34;&#34;&#34;Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -176,7 +181,7 @@ class MixedNB():
         -------
         self : object
         &#34;&#34;&#34;
-        verify_user_inputs(X, y, categorical_features)
+        verify_training_data(X, y, categorical_features)
 
         self.num_samples = X.shape[0]
         self.num_features = X.shape[-1]
@@ -190,7 +195,7 @@ class MixedNB():
                                  else Distribution.GAUSSIAN.value
                                  for i in range(self.num_features)]
         logger.debug(f&#34;Distribution of each feature: \
-            {[Distribution(i).name for i in feature_distributions]}&#34;)
+{[Distribution(i).name for i in feature_distributions]}&#34;)
 
         row_indices_for_classes = [
             np.where(y == category)[0] for category in np.unique(y)]
@@ -200,23 +205,29 @@ class MixedNB():
         # Compute frequency counts for y
         self.models[&#34;y&#34;] = np.bincount(y)
 
-        # Compute statistics for x
+        # Compute statistics for x&#39;s
         for col in range(self.num_features):
 
             model_distribution = {}
             model_parameters = {}
 
+            # Count the number of unique labels for this column
+            num_uniques = np.unique(X[:, col]).size
+
+            logger.debug(
+                f&#34;Distribution for feature {col}: {Distribution(feature_distributions[col]).name}&#34;)
+
             for category in range(self.num_classes):
 
                 arr = np.take(X[:, col], row_indices_for_classes[category])
-                logger.debug(arr)
-
-                logger.debug(
-                    f&#34;Feature distribution for col {col}: {feature_distributions[col]}&#34;)
+                logger.debug(f&#34;Data for y={category}: {arr}&#34;)
 
                 if feature_distributions[col] == Distribution.CATEGORICAL.value:
+                    # The following line accounts for labels that might not exist in
+                    # this class but exists in the other class
+                    arr = np.bincount(arr, minlength=num_uniques)
                     model_distribution[&#34;distribution&#34;] = Distribution.CATEGORICAL.name
-                    model_parameters[f&#34;y={category}&#34;] = np.bincount(arr)
+                    model_parameters[f&#34;y={category}&#34;] = arr
                     model_distribution[&#34;parameters&#34;] = model_parameters
                 else:
                     mu = np.mean(arr)
@@ -232,23 +243,22 @@ class MixedNB():
         logger.debug(self.models)
 
         self._is_fitted = True
+        print(&#34;Model fitted&#34;)
 
         if verbose:
             print(self.models)
 
         return self
 
-    def _posterior_proba(self, col, val, y):
+    def _prior(self, y_class):
         &#34;&#34;&#34;
-        Compute the posterior probability
+        Compute the prior probability
 
-        p(x_col = val | y=y)
+        p(y = y_class)
 
         Parameters
         ----------
-        col : column index (zero-indexing)
-        val : realised value of feature x_col
-        y : value to condition on
+        y_class : value to condition on
 
         Returns
         -------
@@ -257,12 +267,42 @@ class MixedNB():
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
         &#34;&#34;&#34;
-        if self.models[f&#34;x{col}&#34;][&#34;distribution&#34;] == Distribution.CATEGORICAL.name:
-            freq = self.models[f&#34;x{col}&#34;][&#34;parameters&#34;][f&#34;y={y}&#34;]
-            return (freq[val] + self.alpha) / (sum(freq) + self.alpha*self.num_classes)
+        prob = self.models[&#34;y&#34;][y_class]/self.num_samples
+        logger.info(f&#34;p(y={y_class}) \t\t= {prob}&#34;)
+        return prob
+
+    def _posterior(self, i, x, y_class):
+        &#34;&#34;&#34;
+        Compute the posterior probability
+
+        p(x_i = x | y = y_class)
+
+        Parameters
+        ----------
+        i : column index (zero-indexing)
+        x : realised value of feature x_col
+        y_class : value to condition on
+
+        Returns
+        -------
+        C : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute `classes_`.
+        &#34;&#34;&#34;
+        distribution = self.models[f&#34;x{i}&#34;][&#34;distribution&#34;]
+
+        if distribution == Distribution.CATEGORICAL.name:
+            freq = self.models[f&#34;x{i}&#34;][&#34;parameters&#34;][f&#34;y={y_class}&#34;]
+            prob = (freq[x] + self.alpha) / \
+                (sum(freq) + self.alpha*self.num_classes)
         else:
-            params = self.models[f&#34;x{col}&#34;][&#34;parameters&#34;][f&#34;y={y}&#34;]
-            return normal_pdf(val, params[0], params[1])
+            params = self.models[f&#34;x{i}&#34;][&#34;parameters&#34;][f&#34;y={y_class}&#34;]
+            prob = normal_pdf(x, params[0], params[1])
+
+        logger.info(f&#34;p(x_{i}={x}|y={y_class}) \t= {prob}&#34;)
+
+        return prob
 
     def predict_proba(self, X_test, verbose=False):
         &#34;&#34;&#34;
@@ -282,39 +322,52 @@ class MixedNB():
         if not self._is_fitted:
             raise NotFittedError
 
-        verify_user_input(X_test, self.num_features)
+        verify_test_data(X_test, self.num_features)
 
-        # TODO only works on one sample for prediction
+        # The next 23 lines (from `probabilities_samples_all = []` to
+        # `probabilities_samples_all = np.array(probabilities_samples_all)`
+        # can be understood by reading the innermost part
+        # (1. Get the prior probability) until the outermost (6. Repeat for all samples)
+        # Repeating for all samples goes through a for-loop, while the inner parts
+        # are calculated using nested list comprehensions.
+        probabilities_samples_all = []
 
-        # TODO only works for binary
-        y_class = 0
-        prod = 1
-        for i, value in enumerate(X_test[0]):
-            prob = self._posterior_proba(col=i, val=value, y=y_class)
-            logger.info(f&#34;p(x_{i}={value}|y={y_class})\t= {prob}&#34;)
-            prod *= prob
+        # 6. Repeat for all samples
+        for x_test in X_test:
+            probabilities_samples_one = [
+                # 4. Multiply all the posterior probabilities and prior probability
+                np.prod(
+                    # 3. Concatenate the posterior probabilities and prior probability
+                    np.concatenate([
+                        # 2. Get the posterior probability for each feature
+                        [self._posterior(feature_no, x_feature, y_class)
+                         for feature_no, x_feature in enumerate(x_test)],
+                        # 1. Get the prior probability
+                        [self._prior(y_class)]
+                    ],
+                        axis=0))
+                # 5. Repeat for all classes
+                for y_class in range(self.num_classes)]
+            probabilities_samples_all.append(probabilities_samples_one)
+        probabilities_samples_all = np.array(probabilities_samples_all)
 
-        p_y = self.models[&#34;y&#34;][y_class]/self.num_samples
-        logger.info(f&#34;p(y={y_class})\t\t= {p_y}&#34;)
-        numerator = prod * p_y
-        logger.info(f&#34;p()\t\t= {numerator}&#34;)
+        logger.info(
+            f&#34;Unnormalised probabilities:\n{probabilities_samples_all}&#34;)
 
-        # TODO reuse numerator&#39;s value
-        denominator = 0
-        for y_class, p_y in enumerate(self.models[&#34;y&#34;]/self.num_samples):
-            prod = 1
-            for i, value in enumerate(X_test[0]):
-                prob = self._posterior_proba(col=i, val=value, y=y_class)
-                logger.info(f&#34;p(x_{i}={value}|y={y_class})\t= {prob}&#34;)
-                prod *= prob
+        # Normalise the class probabilities for each sample. For example,
+        # [[0.9,0.6],[0.1,0.2]]
+        # becomes
+        # [[0.9/1.5,0.6/1.5],[0.1/0.3,0.2/0.3]]
+        # Epsilon is added to prevent any division by zero, if any
+        normalising_constant = np.sum(
+            probabilities_samples_all, axis=1) + _EPSILON
+        normalised_probabilities_samples_all = \
+            probabilities_samples_all / normalising_constant[:, np.newaxis]
 
-            logger.info(f&#34;p(y={y_class})\t\t= {p_y}&#34;)
-            denominator += prod * p_y
+        logger.info(
+            f&#34;Normalised probabilities:\n{normalised_probabilities_samples_all}&#34;)
 
-        # To prevent division by 0
-        denominator += _EPSILON
-
-        return np.array([numerator/denominator, 1-numerator/denominator])
+        return normalised_probabilities_samples_all
 
     def predict(self, X_test, verbose=False):
         &#34;&#34;&#34;
@@ -329,24 +382,34 @@ class MixedNB():
         C : array, shape = [n_samples]
             Predicted target values for X
         &#34;&#34;&#34;
-        if not self._is_fitted:
-            raise NotFittedError
-
-        THRESHOLD = 0.5
         probs = self.predict_proba(X_test, verbose)
-        return np.argmax(probs, axis=-1)
+        return np.argmax(probs, axis=1)
 
     def get_params(self):
-        print(json.dumps(self.models))
+        print(self.models)
 
-    def save(self, path):
-        &#34;&#34;&#34;Persist model to disk as JSON?&#34;&#34;&#34;
-        raise NotImplementedError(&#34;Work in progress&#34;)
+    def score(self, X, y):
+        &#34;&#34;&#34;Returns the mean accuracy on the given test data and labels.
 
-    def load(self, path):
-        &#34;&#34;&#34;Load model from disk&#34;&#34;&#34;
-        self._is_fitted = True
-        raise NotImplementedError(&#34;Work in progress&#34;)
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+        &#34;&#34;&#34;
+        y_true = np.array(y)
+        y_predicted = np.array(self.predict(X))
+        bool_comparison = y_true == y_predicted
+
+        return np.sum(bool_comparison) / bool_comparison.size
 
 
 def normal_pdf(x, mu, sigma):
@@ -354,40 +417,67 @@ def normal_pdf(x, mu, sigma):
     return 1/np.sqrt(2*np.pi*sigma**2) * np.exp(-(x-mu)**2/(2*sigma**2))
 
 
-def verify_user_input(X, num_features):
+def verify_test_data(X, num_features):
     X = np.array(X)
 
-    if (X.ndim is not 2):
+    if X.ndim is not 2:
         raise ValueError(&#34;Bad input shape of X_test. &#34; +
                          f&#34;Expected an array of dim 2 but got dim {X.ndim} instead.&#34;)
 
-    if (X.shape[1] != num_features):
+    if X.shape[1] != num_features:
         raise ValueError(&#34;Bad input shape of X_test. &#34; +
                          f&#34;Expected (,{num_features}) but got (,{X.shape[1]}) instead&#34;)
 
 
-def verify_user_inputs(X, y, dist):
-    &#34;&#34;&#34;Verifying user inputs by checking dimensions and number of samples&#34;&#34;&#34;
-    X = np.array(X)
-    y = np.array(y)
+def verify_training_data(X_raw, y_raw, categorical_features):
+    &#34;&#34;&#34;Verifying user inputs
 
-    if (X.ndim is not 2):
-        raise ValueError(&#34;Bad input shape of X&#34; +
-                         f&#34;Expected an array of dim 2 but got dim {X.ndim} instead.&#34;)
-    if (y.ndim is not 1):
-        raise ValueError(&#34;Bad input shape of y&#34; +
-                         f&#34;Expected an array of dim 2 but got dim {y.ndim} instead.&#34;)
+    The following will be checked:
+    - dimensions 
+    - number of samples
+    - data type (numbers only)
+    - data type for categorical distributions (integers only, starting from 0 onwards)
+    &#34;&#34;&#34;
+    ACCEPTABLE_TYPES = [&#39;float64&#39;, &#39;int64&#39;, &#39;float32&#39;, &#39;int32&#39;]
+    X = np.array(X_raw)
+    y = np.array(y_raw)
 
-    if (X.shape[0] != y.shape[0]):
+    if X.ndim is not 2:
+        raise ValueError(&#34;Bad input shape of X. &#34; +
+                         f&#34;Expected 2D array, but got dim {X.ndim} instead. &#34; +
+                         &#34;Reshape your data accordingly.&#34;)
+    if y.ndim is not 1:
+        raise ValueError(&#34;Bad input shape of y. &#34; +
+                         f&#34;Expected 2D array, but got dim {y.ndim} instead. &#34; +
+                         &#34;Reshape your data accordingly.&#34;)
+
+    if X.shape[0] != y.shape[0]:
         raise ValueError(
             &#34;No. of samples in X does not match no. of samples in y&#34;)
 
+    if X.dtype not in ACCEPTABLE_TYPES:
+        raise ValueError(&#34;Expected X to contain only numerics, &#34; +
+                         f&#34;but got type {X.dtype} instead. For categorical variables, &#34; +
+                         &#34;Encode your data using sklearn&#39;s LabelEncoder.&#34;)
+
+    if y.dtype not in ACCEPTABLE_TYPES:
+        raise ValueError(&#34;Expected X to contain only numerics, &#34; +
+                         f&#34;but got type {y.dtype} instead. For categorical variables, &#34; +
+                         &#34;Encode your data using sklearn&#39;s LabelEncoder.&#34;)
+
+    for feature_no in categorical_features:
+        uniques = np.unique(X[:, feature_no])
+        if not np.array_equal(uniques, list(range(np.max(uniques)+1))):
+            raise ValueError(f&#34;Expected feature no. {feature_no} to have &#34; +
+                             f&#34;{list(range(np.max(uniques)))} &#34; +
+                             f&#34;unique values, but got {uniques} instead.&#34;)
+
 
 X, y = load_example()
-clf = MixedNB(alpha=1)
+clf = MixedNB(alpha=0)
 clf.fit(X, y, categorical_features=[0, 1])
-print(clf.predict_proba([[0, 0], [1, 1]]))
-print(clf.predict([[0, 0], [1, 1]]))</code></pre>
+print(clf.score(X,y))
+# print(clf.predict_proba([[0, 0], [1, 1]]))</code></pre>
 </details>
 </section>
 <section>
@@ -415,20 +505,20 @@ print(clf.predict([[0, 0], [1, 1]]))</code></pre>
           [178, 63], [174, 69], [166, 60],
           [167, 59], [165, 60], [173, 68],
           [178, 71]]
-    # X = [[0, 0, 180, 75],
-    #      [1, 1, 165, 61],
-    #      [1, 0, 167, 62],
-    #      [0, 1, 178, 63],
-    #      [1, 1, 174, 69],
-    #      [2, 1, 166, 60],
-    #      [0, 2, 167, 59],
-    #      [2, 2, 165, 60],
-    #      [1, 1, 173, 68],
-    #      [0, 2, 178, 71]]
-    # y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
-    X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
-         [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
-    y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
+    X = [[0, 0, 180, 75],
+         [1, 1, 165, 61],
+         [1, 0, 167, 62],
+         [0, 1, 178, 63],
+         [1, 1, 174, 69],
+         [2, 1, 166, 60],
+         [0, 2, 167, 59],
+         [2, 2, 165, 60],
+         [1, 1, 173, 68],
+         [0, 2, 178, 71]]
+    y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
+    # X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
+    #      [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
+    # y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
     X = np.array(X)
     y = np.array(y)
 
@@ -449,8 +539,8 @@ print(clf.predict([[0, 0], [1, 1]]))</code></pre>
     return 1/np.sqrt(2*np.pi*sigma**2) * np.exp(-(x-mu)**2/(2*sigma**2))</code></pre>
 </details>
 </dd>
-<dt id="mixed_naive_bayes.verify_user_input"><code class="name flex">
-<span>def <span class="ident">verify_user_input</span></span>(<span>X, num_features)</span>
+<dt id="mixed_naive_bayes.verify_test_data"><code class="name flex">
+<span>def <span class="ident">verify_test_data</span></span>(<span>X, num_features)</span>
 </code></dt>
 <dd>
 <section class="desc"></section>
@@ -458,42 +548,74 @@ print(clf.predict([[0, 0], [1, 1]]))</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def verify_user_input(X, num_features):
+<pre><code class="python">def verify_test_data(X, num_features):
     X = np.array(X)
 
-    if (X.ndim is not 2):
+    if X.ndim is not 2:
         raise ValueError(&#34;Bad input shape of X_test. &#34; +
                          f&#34;Expected an array of dim 2 but got dim {X.ndim} instead.&#34;)
 
-    if (X.shape[1] != num_features):
+    if X.shape[1] != num_features:
         raise ValueError(&#34;Bad input shape of X_test. &#34; +
                          f&#34;Expected (,{num_features}) but got (,{X.shape[1]}) instead&#34;)</code></pre>
 </details>
 </dd>
-<dt id="mixed_naive_bayes.verify_user_inputs"><code class="name flex">
-<span>def <span class="ident">verify_user_inputs</span></span>(<span>X, y, dist)</span>
+<dt id="mixed_naive_bayes.verify_training_data"><code class="name flex">
+<span>def <span class="ident">verify_training_data</span></span>(<span>X_raw, y_raw, categorical_features)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Verifying user inputs by checking dimensions and number of samples</p></section>
+<section class="desc"><p>Verifying user inputs</p>
+<p>The following will be checked:
+- dimensions
+- number of samples
+- data type (numbers only)
+- data type for categorical distributions (integers only, starting from 0 onwards)</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def verify_user_inputs(X, y, dist):
-    &#34;&#34;&#34;Verifying user inputs by checking dimensions and number of samples&#34;&#34;&#34;
-    X = np.array(X)
-    y = np.array(y)
+<pre><code class="python">def verify_training_data(X_raw, y_raw, categorical_features):
+    &#34;&#34;&#34;Verifying user inputs
 
-    if (X.ndim is not 2):
-        raise ValueError(&#34;Bad input shape of X&#34; +
-                         f&#34;Expected an array of dim 2 but got dim {X.ndim} instead.&#34;)
-    if (y.ndim is not 1):
-        raise ValueError(&#34;Bad input shape of y&#34; +
-                         f&#34;Expected an array of dim 2 but got dim {y.ndim} instead.&#34;)
+    The following will be checked:
+    - dimensions 
+    - number of samples
+    - data type (numbers only)
+    - data type for categorical distributions (integers only, starting from 0 onwards)
+    &#34;&#34;&#34;
+    ACCEPTABLE_TYPES = [&#39;float64&#39;, &#39;int64&#39;, &#39;float32&#39;, &#39;int32&#39;]
+    X = np.array(X_raw)
+    y = np.array(y_raw)
 
-    if (X.shape[0] != y.shape[0]):
+    if X.ndim is not 2:
+        raise ValueError(&#34;Bad input shape of X. &#34; +
+                         f&#34;Expected 2D array, but got dim {X.ndim} instead. &#34; +
+                         &#34;Reshape your data accordingly.&#34;)
+    if y.ndim is not 1:
+        raise ValueError(&#34;Bad input shape of y. &#34; +
+                         f&#34;Expected 2D array, but got dim {y.ndim} instead. &#34; +
+                         &#34;Reshape your data accordingly.&#34;)
+
+    if X.shape[0] != y.shape[0]:
         raise ValueError(
-            &#34;No. of samples in X does not match no. of samples in y&#34;)</code></pre>
+            &#34;No. of samples in X does not match no. of samples in y&#34;)
+
+    if X.dtype not in ACCEPTABLE_TYPES:
+        raise ValueError(&#34;Expected X to contain only numerics, &#34; +
+                         f&#34;but got type {X.dtype} instead. For categorical variables, &#34; +
+                         &#34;Encode your data using sklearn&#39;s LabelEncoder.&#34;)
+
+    if y.dtype not in ACCEPTABLE_TYPES:
+        raise ValueError(&#34;Expected X to contain only numerics, &#34; +
+                         f&#34;but got type {y.dtype} instead. For categorical variables, &#34; +
+                         &#34;Encode your data using sklearn&#39;s LabelEncoder.&#34;)
+
+    for feature_no in categorical_features:
+        uniques = np.unique(X[:, feature_no])
+        if not np.array_equal(uniques, list(range(np.max(uniques)+1))):
+            raise ValueError(f&#34;Expected feature no. {feature_no} to have &#34; +
+                             f&#34;{list(range(np.max(uniques)))} &#34; +
+                             f&#34;unique values, but got {uniques} instead.&#34;)</code></pre>
 </details>
 </dd>
 </dl>
@@ -538,9 +660,11 @@ print(clf.predict([[0, 0], [1, 1]]))</code></pre>
 </code></dt>
 <dd>
 <section class="desc"><p>Naive Bayes classifier for categorical and Gaussian models.</p>
+<p>Note: MixedNB expects that for each feature, all possible classes
+are in the dataset or encoded.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>alpha</code></strong> :&ensp;<code>float</code>, optional (default=<code>0</code>)</dt>
+<dt><strong><code>alpha</code></strong> :&ensp;<code>non</code>-<code>negative</code> <code>float</code>, optional (default=<code>0</code>)</dt>
 <dd>Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
 This is for features with categorical distribution.</dd>
 <dt><strong><code>priors</code></strong> :&ensp;<code>array</code>-<code>like</code>, <code>shape</code> (<code>n_classes</code>,)</dt>
@@ -574,7 +698,7 @@ variances for calculation stability.</dd>
 &gt;&gt;&gt; y = np.array(y)
 &gt;&gt;&gt; clf = MixedNB()
 &gt;&gt;&gt; clf.fit(X, y, categorical_features=[0, 1])
-&gt;&gt;&gt; print(clf.predict_proba([[0, 0], [1, 1]]))
+&gt;&gt;&gt; print(clf.predict([[0, 0]]))
 </code></pre></section>
 <details class="source">
 <summary>
@@ -584,9 +708,12 @@ variances for calculation stability.</dd>
     &#34;&#34;&#34;
     Naive Bayes classifier for categorical and Gaussian models.
 
+    Note: MixedNB expects that for each feature, all possible classes
+    are in the dataset or encoded.
+
     Parameters
     ----------
-    alpha : float, optional (default=0)
+    alpha : non-negative float, optional (default=0)
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
         This is for features with categorical distribution.
     priors : array-like, shape (n_classes,)
@@ -623,7 +750,7 @@ variances for calculation stability.</dd>
     &gt;&gt;&gt; y = np.array(y)
     &gt;&gt;&gt; clf = MixedNB()
     &gt;&gt;&gt; clf.fit(X, y, categorical_features=[0, 1])
-    &gt;&gt;&gt; print(clf.predict_proba([[0, 0], [1, 1]]))
+    &gt;&gt;&gt; print(clf.predict([[0, 0]]))
     &#34;&#34;&#34;
 
     def __init__(self, alpha=0.0):
@@ -634,7 +761,7 @@ variances for calculation stability.</dd>
         self.models = {}
         self._is_fitted = False
 
-    def fit(self, X, y, categorical_features, verbose=True):
+    def fit(self, X, y, categorical_features, verbose=False):
         &#34;&#34;&#34;Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -655,7 +782,7 @@ variances for calculation stability.</dd>
         -------
         self : object
         &#34;&#34;&#34;
-        verify_user_inputs(X, y, categorical_features)
+        verify_training_data(X, y, categorical_features)
 
         self.num_samples = X.shape[0]
         self.num_features = X.shape[-1]
@@ -669,7 +796,7 @@ variances for calculation stability.</dd>
                                  else Distribution.GAUSSIAN.value
                                  for i in range(self.num_features)]
         logger.debug(f&#34;Distribution of each feature: \
-            {[Distribution(i).name for i in feature_distributions]}&#34;)
+{[Distribution(i).name for i in feature_distributions]}&#34;)
 
         row_indices_for_classes = [
             np.where(y == category)[0] for category in np.unique(y)]
@@ -679,23 +806,29 @@ variances for calculation stability.</dd>
         # Compute frequency counts for y
         self.models[&#34;y&#34;] = np.bincount(y)
 
-        # Compute statistics for x
+        # Compute statistics for x&#39;s
         for col in range(self.num_features):
 
             model_distribution = {}
             model_parameters = {}
 
+            # Count the number of unique labels for this column
+            num_uniques = np.unique(X[:, col]).size
+
+            logger.debug(
+                f&#34;Distribution for feature {col}: {Distribution(feature_distributions[col]).name}&#34;)
+
             for category in range(self.num_classes):
 
                 arr = np.take(X[:, col], row_indices_for_classes[category])
-                logger.debug(arr)
-
-                logger.debug(
-                    f&#34;Feature distribution for col {col}: {feature_distributions[col]}&#34;)
+                logger.debug(f&#34;Data for y={category}: {arr}&#34;)
 
                 if feature_distributions[col] == Distribution.CATEGORICAL.value:
+                    # The following line accounts for labels that might not exist in
+                    # this class but exists in the other class
+                    arr = np.bincount(arr, minlength=num_uniques)
                     model_distribution[&#34;distribution&#34;] = Distribution.CATEGORICAL.name
-                    model_parameters[f&#34;y={category}&#34;] = np.bincount(arr)
+                    model_parameters[f&#34;y={category}&#34;] = arr
                     model_distribution[&#34;parameters&#34;] = model_parameters
                 else:
                     mu = np.mean(arr)
@@ -711,23 +844,22 @@ variances for calculation stability.</dd>
         logger.debug(self.models)
 
         self._is_fitted = True
+        print(&#34;Model fitted&#34;)
 
         if verbose:
             print(self.models)
 
         return self
 
-    def _posterior_proba(self, col, val, y):
+    def _prior(self, y_class):
         &#34;&#34;&#34;
-        Compute the posterior probability
+        Compute the prior probability
 
-        p(x_col = val | y=y)
+        p(y = y_class)
 
         Parameters
         ----------
-        col : column index (zero-indexing)
-        val : realised value of feature x_col
-        y : value to condition on
+        y_class : value to condition on
 
         Returns
         -------
@@ -736,12 +868,42 @@ variances for calculation stability.</dd>
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
         &#34;&#34;&#34;
-        if self.models[f&#34;x{col}&#34;][&#34;distribution&#34;] == Distribution.CATEGORICAL.name:
-            freq = self.models[f&#34;x{col}&#34;][&#34;parameters&#34;][f&#34;y={y}&#34;]
-            return (freq[val] + self.alpha) / (sum(freq) + self.alpha*self.num_classes)
+        prob = self.models[&#34;y&#34;][y_class]/self.num_samples
+        logger.info(f&#34;p(y={y_class}) \t\t= {prob}&#34;)
+        return prob
+
+    def _posterior(self, i, x, y_class):
+        &#34;&#34;&#34;
+        Compute the posterior probability
+
+        p(x_i = x | y = y_class)
+
+        Parameters
+        ----------
+        i : column index (zero-indexing)
+        x : realised value of feature x_col
+        y_class : value to condition on
+
+        Returns
+        -------
+        C : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute `classes_`.
+        &#34;&#34;&#34;
+        distribution = self.models[f&#34;x{i}&#34;][&#34;distribution&#34;]
+
+        if distribution == Distribution.CATEGORICAL.name:
+            freq = self.models[f&#34;x{i}&#34;][&#34;parameters&#34;][f&#34;y={y_class}&#34;]
+            prob = (freq[x] + self.alpha) / \
+                (sum(freq) + self.alpha*self.num_classes)
         else:
-            params = self.models[f&#34;x{col}&#34;][&#34;parameters&#34;][f&#34;y={y}&#34;]
-            return normal_pdf(val, params[0], params[1])
+            params = self.models[f&#34;x{i}&#34;][&#34;parameters&#34;][f&#34;y={y_class}&#34;]
+            prob = normal_pdf(x, params[0], params[1])
+
+        logger.info(f&#34;p(x_{i}={x}|y={y_class}) \t= {prob}&#34;)
+
+        return prob
 
     def predict_proba(self, X_test, verbose=False):
         &#34;&#34;&#34;
@@ -761,39 +923,52 @@ variances for calculation stability.</dd>
         if not self._is_fitted:
             raise NotFittedError
 
-        verify_user_input(X_test, self.num_features)
+        verify_test_data(X_test, self.num_features)
 
-        # TODO only works on one sample for prediction
+        # The next 23 lines (from `probabilities_samples_all = []` to
+        # `probabilities_samples_all = np.array(probabilities_samples_all)`
+        # can be understood by reading the innermost part
+        # (1. Get the prior probability) until the outermost (6. Repeat for all samples)
+        # Repeating for all samples goes through a for-loop, while the inner parts
+        # are calculated using nested list comprehensions.
+        probabilities_samples_all = []
 
-        # TODO only works for binary
-        y_class = 0
-        prod = 1
-        for i, value in enumerate(X_test[0]):
-            prob = self._posterior_proba(col=i, val=value, y=y_class)
-            logger.info(f&#34;p(x_{i}={value}|y={y_class})\t= {prob}&#34;)
-            prod *= prob
+        # 6. Repeat for all samples
+        for x_test in X_test:
+            probabilities_samples_one = [
+                # 4. Multiply all the posterior probabilities and prior probability
+                np.prod(
+                    # 3. Concatenate the posterior probabilities and prior probability
+                    np.concatenate([
+                        # 2. Get the posterior probability for each feature
+                        [self._posterior(feature_no, x_feature, y_class)
+                         for feature_no, x_feature in enumerate(x_test)],
+                        # 1. Get the prior probability
+                        [self._prior(y_class)]
+                    ],
+                        axis=0))
+                # 5. Repeat for all classes
+                for y_class in range(self.num_classes)]
+            probabilities_samples_all.append(probabilities_samples_one)
+        probabilities_samples_all = np.array(probabilities_samples_all)
 
-        p_y = self.models[&#34;y&#34;][y_class]/self.num_samples
-        logger.info(f&#34;p(y={y_class})\t\t= {p_y}&#34;)
-        numerator = prod * p_y
-        logger.info(f&#34;p()\t\t= {numerator}&#34;)
+        logger.info(
+            f&#34;Unnormalised probabilities:\n{probabilities_samples_all}&#34;)
 
-        # TODO reuse numerator&#39;s value
-        denominator = 0
-        for y_class, p_y in enumerate(self.models[&#34;y&#34;]/self.num_samples):
-            prod = 1
-            for i, value in enumerate(X_test[0]):
-                prob = self._posterior_proba(col=i, val=value, y=y_class)
-                logger.info(f&#34;p(x_{i}={value}|y={y_class})\t= {prob}&#34;)
-                prod *= prob
+        # Normalise the class probabilities for each sample. For example,
+        # [[0.9,0.6],[0.1,0.2]]
+        # becomes
+        # [[0.9/1.5,0.6/1.5],[0.1/0.3,0.2/0.3]]
+        # Epsilon is added to prevent any division by zero, if any
+        normalising_constant = np.sum(
+            probabilities_samples_all, axis=1) + _EPSILON
+        normalised_probabilities_samples_all = \
+            probabilities_samples_all / normalising_constant[:, np.newaxis]
 
-            logger.info(f&#34;p(y={y_class})\t\t= {p_y}&#34;)
-            denominator += prod * p_y
+        logger.info(
+            f&#34;Normalised probabilities:\n{normalised_probabilities_samples_all}&#34;)
 
-        # To prevent division by 0
-        denominator += _EPSILON
-
-        return np.array([numerator/denominator, 1-numerator/denominator])
+        return normalised_probabilities_samples_all
 
     def predict(self, X_test, verbose=False):
         &#34;&#34;&#34;
@@ -808,29 +983,39 @@ variances for calculation stability.</dd>
         C : array, shape = [n_samples]
             Predicted target values for X
         &#34;&#34;&#34;
-        if not self._is_fitted:
-            raise NotFittedError
-
-        THRESHOLD = 0.5
         probs = self.predict_proba(X_test, verbose)
-        return np.argmax(probs, axis=-1)
+        return np.argmax(probs, axis=1)
 
     def get_params(self):
-        print(json.dumps(self.models))
+        print(self.models)
 
-    def save(self, path):
-        &#34;&#34;&#34;Persist model to disk as JSON?&#34;&#34;&#34;
-        raise NotImplementedError(&#34;Work in progress&#34;)
+    def score(self, X, y):
+        &#34;&#34;&#34;Returns the mean accuracy on the given test data and labels.
 
-    def load(self, path):
-        &#34;&#34;&#34;Load model from disk&#34;&#34;&#34;
-        self._is_fitted = True
-        raise NotImplementedError(&#34;Work in progress&#34;)</code></pre>
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+        &#34;&#34;&#34;
+        y_true = np.array(y)
+        y_predicted = np.array(self.predict(X))
+        bool_comparison = y_true == y_predicted
+
+        return np.sum(bool_comparison) / bool_comparison.size</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
 <dt id="mixed_naive_bayes.MixedNB.fit"><code class="name flex">
-<span>def <span class="ident">fit</span></span>(<span>self, X, y, categorical_features, verbose=True)</span>
+<span>def <span class="ident">fit</span></span>(<span>self, X, y, categorical_features, verbose=False)</span>
 </code></dt>
 <dd>
 <section class="desc"><p>Fit Mixed Naive Bayes according to X, y</p>
@@ -856,88 +1041,95 @@ and n_features is the number of features.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def fit(self, X, y, categorical_features, verbose=True):
-    &#34;&#34;&#34;Fit Mixed Naive Bayes according to X, y
+<pre><code class="python">    def fit(self, X, y, categorical_features, verbose=False):
+        &#34;&#34;&#34;Fit Mixed Naive Bayes according to X, y
 
-    This method also prepares a `self.models` object. Note that the reason
-    why some variables are cast to list() is to make the models object
-    JSON serializable.
+        This method also prepares a `self.models` object. Note that the reason
+        why some variables are cast to list() is to make the models object
+        JSON serializable.
 
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        Training vectors, where n_samples is the number of samples
-        and n_features is the number of features.
-    y : array-like, shape (n_samples,)
-        Target values.
-    categorical_features : array
-        Columns which have categorical feature_distributions
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+        y : array-like, shape (n_samples,)
+            Target values.
+        categorical_features : array
+            Columns which have categorical feature_distributions
 
-    Returns
-    -------
-    self : object
-    &#34;&#34;&#34;
-    verify_user_inputs(X, y, categorical_features)
+        Returns
+        -------
+        self : object
+        &#34;&#34;&#34;
+        verify_training_data(X, y, categorical_features)
 
-    self.num_samples = X.shape[0]
-    self.num_features = X.shape[-1]
-    self.num_classes = np.unique(y).size
-    logger.debug(f&#34;No. of samples:  {self.num_samples}&#34;)
-    logger.debug(f&#34;No. of features: {self.num_features}&#34;)
-    logger.debug(f&#34;No. of classes:  {self.num_classes}&#34;)
+        self.num_samples = X.shape[0]
+        self.num_features = X.shape[-1]
+        self.num_classes = np.unique(y).size
+        logger.debug(f&#34;No. of samples:  {self.num_samples}&#34;)
+        logger.debug(f&#34;No. of features: {self.num_features}&#34;)
+        logger.debug(f&#34;No. of classes:  {self.num_classes}&#34;)
 
-    feature_distributions = [Distribution.CATEGORICAL.value
-                             if i in categorical_features
-                             else Distribution.GAUSSIAN.value
-                             for i in range(self.num_features)]
-    logger.debug(f&#34;Distribution of each feature: \
-        {[Distribution(i).name for i in feature_distributions]}&#34;)
+        feature_distributions = [Distribution.CATEGORICAL.value
+                                 if i in categorical_features
+                                 else Distribution.GAUSSIAN.value
+                                 for i in range(self.num_features)]
+        logger.debug(f&#34;Distribution of each feature: \
+{[Distribution(i).name for i in feature_distributions]}&#34;)
 
-    row_indices_for_classes = [
-        np.where(y == category)[0] for category in np.unique(y)]
-    logger.debug(
-        f&#34;Row indices for the different classes: {row_indices_for_classes}&#34;)
+        row_indices_for_classes = [
+            np.where(y == category)[0] for category in np.unique(y)]
+        logger.debug(
+            f&#34;Row indices for the different classes: {row_indices_for_classes}&#34;)
 
-    # Compute frequency counts for y
-    self.models[&#34;y&#34;] = np.bincount(y)
+        # Compute frequency counts for y
+        self.models[&#34;y&#34;] = np.bincount(y)
 
-    # Compute statistics for x
-    for col in range(self.num_features):
+        # Compute statistics for x&#39;s
+        for col in range(self.num_features):
 
-        model_distribution = {}
-        model_parameters = {}
+            model_distribution = {}
+            model_parameters = {}
 
-        for category in range(self.num_classes):
-
-            arr = np.take(X[:, col], row_indices_for_classes[category])
-            logger.debug(arr)
+            # Count the number of unique labels for this column
+            num_uniques = np.unique(X[:, col]).size
 
             logger.debug(
-                f&#34;Feature distribution for col {col}: {feature_distributions[col]}&#34;)
+                f&#34;Distribution for feature {col}: {Distribution(feature_distributions[col]).name}&#34;)
 
-            if feature_distributions[col] == Distribution.CATEGORICAL.value:
-                model_distribution[&#34;distribution&#34;] = Distribution.CATEGORICAL.name
-                model_parameters[f&#34;y={category}&#34;] = np.bincount(arr)
-                model_distribution[&#34;parameters&#34;] = model_parameters
-            else:
-                mu = np.mean(arr)
-                sigma = np.std(arr, ddof=1)  # (n-1); Bessel&#39;s corrections
-                model_distribution[&#34;distribution&#34;] = Distribution.GAUSSIAN.name
-                model_parameters[f&#34;y={category}&#34;] = [mu, sigma]
-                model_distribution[&#34;parameters&#34;] = model_parameters
+            for category in range(self.num_classes):
 
-            self.models[f&#34;x{col}&#34;] = model_parameters
+                arr = np.take(X[:, col], row_indices_for_classes[category])
+                logger.debug(f&#34;Data for y={category}: {arr}&#34;)
 
-        self.models[f&#34;x{col}&#34;] = model_distribution
+                if feature_distributions[col] == Distribution.CATEGORICAL.value:
+                    # The following line accounts for labels that might not exist in
+                    # this class but exists in the other class
+                    arr = np.bincount(arr, minlength=num_uniques)
+                    model_distribution[&#34;distribution&#34;] = Distribution.CATEGORICAL.name
+                    model_parameters[f&#34;y={category}&#34;] = arr
+                    model_distribution[&#34;parameters&#34;] = model_parameters
+                else:
+                    mu = np.mean(arr)
+                    sigma = np.std(arr, ddof=1)  # (n-1); Bessel&#39;s corrections
+                    model_distribution[&#34;distribution&#34;] = Distribution.GAUSSIAN.name
+                    model_parameters[f&#34;y={category}&#34;] = [mu, sigma]
+                    model_distribution[&#34;parameters&#34;] = model_parameters
 
-    logger.debug(self.models)
+                self.models[f&#34;x{col}&#34;] = model_parameters
 
-    self._is_fitted = True
+            self.models[f&#34;x{col}&#34;] = model_distribution
 
-    if verbose:
-        print(self.models)
+        logger.debug(self.models)
 
-    return self</code></pre>
+        self._is_fitted = True
+        print(&#34;Model fitted&#34;)
+
+        if verbose:
+            print(self.models)
+
+        return self</code></pre>
 </details>
 </dd>
 <dt id="mixed_naive_bayes.MixedNB.get_params"><code class="name flex">
@@ -950,22 +1142,7 @@ and n_features is the number of features.</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def get_params(self):
-    print(json.dumps(self.models))</code></pre>
-</details>
-</dd>
-<dt id="mixed_naive_bayes.MixedNB.load"><code class="name flex">
-<span>def <span class="ident">load</span></span>(<span>self, path)</span>
-</code></dt>
-<dd>
-<section class="desc"><p>Load model from disk</p></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def load(self, path):
-    &#34;&#34;&#34;Load model from disk&#34;&#34;&#34;
-    self._is_fitted = True
-    raise NotImplementedError(&#34;Work in progress&#34;)</code></pre>
+    print(self.models)</code></pre>
 </details>
 </dd>
 <dt id="mixed_naive_bayes.MixedNB.predict"><code class="name flex">
@@ -1000,12 +1177,8 @@ and n_features is the number of features.</dd>
     C : array, shape = [n_samples]
         Predicted target values for X
     &#34;&#34;&#34;
-    if not self._is_fitted:
-        raise NotFittedError
-
-    THRESHOLD = 0.5
     probs = self.predict_proba(X_test, verbose)
-    return np.argmax(probs, axis=-1)</code></pre>
+    return np.argmax(probs, axis=1)</code></pre>
 </details>
 </dd>
 <dt id="mixed_naive_bayes.MixedNB.predict_proba"><code class="name flex">
@@ -1047,53 +1220,99 @@ order, as they appear in the attribute <code>classes_</code>.</dd>
     if not self._is_fitted:
         raise NotFittedError
 
-    verify_user_input(X_test, self.num_features)
+    verify_test_data(X_test, self.num_features)
 
-    # TODO only works on one sample for prediction
+    # The next 23 lines (from `probabilities_samples_all = []` to
+    # `probabilities_samples_all = np.array(probabilities_samples_all)`
+    # can be understood by reading the innermost part
+    # (1. Get the prior probability) until the outermost (6. Repeat for all samples)
+    # Repeating for all samples goes through a for-loop, while the inner parts
+    # are calculated using nested list comprehensions.
+    probabilities_samples_all = []
 
-    # TODO only works for binary
-    y_class = 0
-    prod = 1
-    for i, value in enumerate(X_test[0]):
-        prob = self._posterior_proba(col=i, val=value, y=y_class)
-        logger.info(f&#34;p(x_{i}={value}|y={y_class})\t= {prob}&#34;)
-        prod *= prob
+    # 6. Repeat for all samples
+    for x_test in X_test:
+        probabilities_samples_one = [
+            # 4. Multiply all the posterior probabilities and prior probability
+            np.prod(
+                # 3. Concatenate the posterior probabilities and prior probability
+                np.concatenate([
+                    # 2. Get the posterior probability for each feature
+                    [self._posterior(feature_no, x_feature, y_class)
+                     for feature_no, x_feature in enumerate(x_test)],
+                    # 1. Get the prior probability
+                    [self._prior(y_class)]
+                ],
+                    axis=0))
+            # 5. Repeat for all classes
+            for y_class in range(self.num_classes)]
+        probabilities_samples_all.append(probabilities_samples_one)
+    probabilities_samples_all = np.array(probabilities_samples_all)
 
-    p_y = self.models[&#34;y&#34;][y_class]/self.num_samples
-    logger.info(f&#34;p(y={y_class})\t\t= {p_y}&#34;)
-    numerator = prod * p_y
-    logger.info(f&#34;p()\t\t= {numerator}&#34;)
+    logger.info(
+        f&#34;Unnormalised probabilities:\n{probabilities_samples_all}&#34;)
 
-    # TODO reuse numerator&#39;s value
-    denominator = 0
-    for y_class, p_y in enumerate(self.models[&#34;y&#34;]/self.num_samples):
-        prod = 1
-        for i, value in enumerate(X_test[0]):
-            prob = self._posterior_proba(col=i, val=value, y=y_class)
-            logger.info(f&#34;p(x_{i}={value}|y={y_class})\t= {prob}&#34;)
-            prod *= prob
+    # Normalise the class probabilities for each sample. For example,
+    # [[0.9,0.6],[0.1,0.2]]
+    # becomes
+    # [[0.9/1.5,0.6/1.5],[0.1/0.3,0.2/0.3]]
+    # Epsilon is added to prevent any division by zero, if any
+    normalising_constant = np.sum(
+        probabilities_samples_all, axis=1) + _EPSILON
+    normalised_probabilities_samples_all = \
+        probabilities_samples_all / normalising_constant[:, np.newaxis]
 
-        logger.info(f&#34;p(y={y_class})\t\t= {p_y}&#34;)
-        denominator += prod * p_y
+    logger.info(
+        f&#34;Normalised probabilities:\n{normalised_probabilities_samples_all}&#34;)
 
-    # To prevent division by 0
-    denominator += _EPSILON
-
-    return np.array([numerator/denominator, 1-numerator/denominator])</code></pre>
+    return normalised_probabilities_samples_all</code></pre>
 </details>
 </dd>
-<dt id="mixed_naive_bayes.MixedNB.save"><code class="name flex">
-<span>def <span class="ident">save</span></span>(<span>self, path)</span>
+<dt id="mixed_naive_bayes.MixedNB.score"><code class="name flex">
+<span>def <span class="ident">score</span></span>(<span>self, X, y)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Persist model to disk as JSON?</p></section>
+<section class="desc"><p>Returns the mean accuracy on the given test data and labels.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>array</code>-<code>like</code>, <code>shape</code> = (<code>n_samples</code>, <code>n_features</code>)</dt>
+<dd>Test samples.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>array</code>-<code>like</code>, <code>shape</code> = (<code>n_samples</code>) or (<code>n_samples</code>, <code>n_outputs</code>)</dt>
+<dd>True labels for X.</dd>
+<dt><strong><code>sample_weight</code></strong> :&ensp;<code>array</code>-<code>like</code>, <code>shape</code> = [<code>n_samples</code>], optional</dt>
+<dd>Sample weights.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>score</code></strong> :&ensp;<code>float</code></dt>
+<dd>Mean accuracy of self.predict(X) wrt. y.</dd>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def save(self, path):
-    &#34;&#34;&#34;Persist model to disk as JSON?&#34;&#34;&#34;
-    raise NotImplementedError(&#34;Work in progress&#34;)</code></pre>
+<pre><code class="python">def score(self, X, y):
+    &#34;&#34;&#34;Returns the mean accuracy on the given test data and labels.
+
+    Parameters
+    ----------
+    X : array-like, shape = (n_samples, n_features)
+        Test samples.
+    y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        True labels for X.
+    sample_weight : array-like, shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    score : float
+        Mean accuracy of self.predict(X) wrt. y.
+    &#34;&#34;&#34;
+    y_true = np.array(y)
+    y_predicted = np.array(self.predict(X))
+    bool_comparison = y_true == y_predicted
+
+    return np.sum(bool_comparison) / bool_comparison.size</code></pre>
 </details>
 </dd>
 </dl>
@@ -1114,6 +1333,7 @@ model is fitted.</p></section>
     Exception class for cases when the predict API is called before
     model is fitted.
     &#34;&#34;&#34;
+
     def __str__(self):
         return &#34;This MixedNB instance is not fitted yet. Call &#39;fit&#39; \
             with appropriate arguments before using this method.&#34;</code></pre>
@@ -1137,8 +1357,8 @@ model is fitted.</p></section>
 <ul class="">
 <li><code><a title="mixed_naive_bayes.load_example" href="#mixed_naive_bayes.load_example">load_example</a></code></li>
 <li><code><a title="mixed_naive_bayes.normal_pdf" href="#mixed_naive_bayes.normal_pdf">normal_pdf</a></code></li>
-<li><code><a title="mixed_naive_bayes.verify_user_input" href="#mixed_naive_bayes.verify_user_input">verify_user_input</a></code></li>
-<li><code><a title="mixed_naive_bayes.verify_user_inputs" href="#mixed_naive_bayes.verify_user_inputs">verify_user_inputs</a></code></li>
+<li><code><a title="mixed_naive_bayes.verify_test_data" href="#mixed_naive_bayes.verify_test_data">verify_test_data</a></code></li>
+<li><code><a title="mixed_naive_bayes.verify_training_data" href="#mixed_naive_bayes.verify_training_data">verify_training_data</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -1152,13 +1372,12 @@ model is fitted.</p></section>
 </li>
 <li>
 <h4><code><a title="mixed_naive_bayes.MixedNB" href="#mixed_naive_bayes.MixedNB">MixedNB</a></code></h4>
-<ul class="two-column">
+<ul class="">
 <li><code><a title="mixed_naive_bayes.MixedNB.fit" href="#mixed_naive_bayes.MixedNB.fit">fit</a></code></li>
 <li><code><a title="mixed_naive_bayes.MixedNB.get_params" href="#mixed_naive_bayes.MixedNB.get_params">get_params</a></code></li>
-<li><code><a title="mixed_naive_bayes.MixedNB.load" href="#mixed_naive_bayes.MixedNB.load">load</a></code></li>
 <li><code><a title="mixed_naive_bayes.MixedNB.predict" href="#mixed_naive_bayes.MixedNB.predict">predict</a></code></li>
 <li><code><a title="mixed_naive_bayes.MixedNB.predict_proba" href="#mixed_naive_bayes.MixedNB.predict_proba">predict_proba</a></code></li>
-<li><code><a title="mixed_naive_bayes.MixedNB.save" href="#mixed_naive_bayes.MixedNB.save">save</a></code></li>
+<li><code><a title="mixed_naive_bayes.MixedNB.score" href="#mixed_naive_bayes.MixedNB.score">score</a></code></li>
 </ul>
 </li>
 <li>
