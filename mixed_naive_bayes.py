@@ -362,34 +362,36 @@ class MixedNB():
         X_test = np.array(X_test)
 
         x_gaussian = X_test[:, self.gaussian_features]
-        logger.debug(f"x: {x_gaussian}")
+        # logger.debug(f"x: {x_gaussian}")
 
         mu = self.theta[:, np.newaxis]
-        logger.debug(f"mu: {mu}")
+        # logger.debug(f"mu: {mu}")
         s = self.sigma[:, np.newaxis]
-        logger.debug(f"s: {s}")
+        # logger.debug(f"s: {s}")
 
         something = 1/np.sqrt(2*np.pi*s**2) * \
             np.exp(-(x_gaussian-mu)**2/(2*s**2))
-        logger.debug(f"something: {something}")
+        # logger.debug(f"something: {something}")
 
         t = np.prod(something, axis=2)[:, :, np.newaxis]
-        logger.debug(f"t: {t}")
+        # logger.debug(f"t: {t}")
 
         x_categorical = X_test[:, self.categorical_features]
         logger.debug(f"x: {x_categorical}")
         logger.debug(
             f"categorical_posterior[0]: {self.categorical_posteriors[0]}")
+        logger.debug(
+            f"categorical_posterior[1]: {self.categorical_posteriors[1]}")
 
         probas = [categorical_posterior[:, X_test[:, i][:,np.newaxis].T]
                   for i, categorical_posterior in enumerate(self.categorical_posteriors)]
         logger.debug(f"probas {np.vstack(probas)}")
 
         f = t * self.prior[:, np.newaxis][:, np.newaxis]
-        logger.debug(f"f: {f}")
+        # logger.debug(f"f: {f}")
 
         normalised = f / np.sum(f, axis=0)
-        logger.debug(f"normalised {normalised}")
+        # logger.debug(f"normalised {normalised}")
 
         # raise NotFittedError
 
