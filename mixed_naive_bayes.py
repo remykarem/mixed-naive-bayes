@@ -12,12 +12,12 @@ Look at the example in `mixed_naive_bayes.MixedNB`.
 
 import warnings
 from enum import Enum
-# import logging
+import logging
 
 import numpy as np
 
-# logger = logging.getLogger(__name__)
-# logging.basicConfig(level=logging.DEBUG, format='%(funcName)s: %(message)s')
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='%(funcName)s: %(message)s')
 # logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
@@ -125,16 +125,19 @@ class MixedNB():
         self.alpha = alpha
         self.class_prior = class_prior
         self.var_smoothing = var_smoothing
+        self.num_classes = 0
         self.num_samples = 0
         self.num_features = 0
-        self.num_classes = 0
         self.models = {}
         self.epsilon = 1e-9
         self._is_fitted = False
 
-        self.prior = 0
-        self.theta = 0
-        self.sigma = 0
+        self.prior = []
+        self.theta = []
+        self.sigma = []
+        self.categorical_posteriors = []
+        self.gaussian_features = []
+        self.categorical_features = []
 
     def fit(self, X, y, categorical_features=[], verbose=False):
         """Fit Mixed Naive Bayes according to X, y
@@ -160,16 +163,14 @@ class MixedNB():
         validate_inits(self.alpha, self.class_prior)
         validate_training_data(X, y, categorical_features)
 
+        self.categorical_features = categorical_features
+
+        self.num_classes = np.unique(y).size
         self.num_samples = X.shape[0]
         self.num_features = X.shape[-1]
-        self.num_classes = np.unique(y).size
         # logger.debug(f"No. of samples:  {self.num_samples}")
         # logger.debug(f"No. of features: {self.num_features}")
         # logger.debug(f"No. of classes:  {self.num_classes}")
-        
-        self.prior = np.zeros((self.num_classes))
-        self.theta = np.zeros((self.num_classes, self.num_features))
-        self.sigma = np.zeros((self.num_classes, self.num_features))
 
         feature_distributions = [Distribution.CATEGORICAL.value
                                  if i in categorical_features
@@ -191,48 +192,88 @@ class MixedNB():
         self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
         # logger.debug(f"{self.epsilon}")
 
+        self.gaussian_features = np.delete(
+            np.arange(self.num_features), categorical_features)
+
+        # How many categories are there in each categorical_feature
+        # Add 1 due to zero-indexing
+        max_categories = np.max(X[:, categorical_features], axis=0) + 1
+
+        # Prepare empty array
+        self.prior = np.zeros((self.num_classes))
+        self.theta = np.zeros((self.num_classes, len(self.gaussian_features)))
+        self.sigma = np.zeros((self.num_classes, len(self.gaussian_features)))
+        self.categorical_posteriors = [
+            np.zeros((self.num_classes, num_categories))
+            for num_categories in max_categories]
+
         # Compute prior probabilities
         if self.class_prior is None:
-            self.models["y"] = np.bincount(y)
+            # self.models["y"] = np.bincount(y)
             self.prior = np.bincount(y)/self.num_samples
-        else:
-            self.models["y"] = np.squeeze(self.class_prior)
+        # else:
+        #     self.models["y"] = np.squeeze(self.class_prior)
+
+        for y_i in np.unique(y):
+            # TODO experiment the assignment below
+            x = X[y == y_i, :][:, self.gaussian_features]
+            self.theta[y_i, :] = np.mean(x, axis=0)
+            # Bessel's correction; n-1
+            self.sigma[y_i, :] = np.std(x, ddof=1, axis=0)
+
+            for categorical_feature in categorical_features:
+                dist = np.bincount(X[y == y_i, :][:, categorical_feature],
+                                   minlength=max_categories[categorical_feature])
+                self.categorical_posteriors[categorical_feature][y_i,
+                                                                 :] = dist/np.sum(dist)
+
+        logger.debug(self.prior)
+        logger.debug(self.theta)
+        logger.debug(self.sigma)
+        logger.debug(self.categorical_posteriors)
+
+        # a = np.concatenate(
+        #     [np.expand_dims(y, axis=0).reshape(-1, 1), X], axis=1)
+        # b = a[a[:, 0].argsort()]
+        # c = np.expand_dims(b, axis=0)
+        # splits = np.bincount(y)[:-1] - 1
+        # np.split(c, splits, axis=1)
 
         # Compute statistics for x's
-        for col in range(self.num_features):
+        # for col in range(self.num_features):
 
-            model_distribution = {}
-            model_parameters = {}
+        #     model_distribution = {}
+        #     model_parameters = {}
 
-            # Count the number of unique labels for this column
-            num_uniques = np.unique(X[:, col]).size
+        #     # Count the number of unique labels for this column
+        #     num_uniques = np.unique(X[:, col]).size
 
-            # logger.debug(
-            #     f"Distribution for feature {col}: {Distribution(feature_distributions[col]).name}")
+        #     # logger.debug(
+        #     #     f"Distribution for feature {col}: {Distribution(feature_distributions[col]).name}")
 
-            for category in range(self.num_classes):
+        #     for category in range(self.num_classes):
 
-                arr = np.take(X[:, col], row_indices_for_classes[category])
-                # logger.debug(f"Data for y={category}: {arr}")
+        #         arr = np.take(X[:, col], row_indices_for_classes[category])
+        #         # logger.debug(f"Data for y={category}: {arr}")
 
-                if feature_distributions[col] == Distribution.CATEGORICAL.value:
-                    # The following line accounts for labels that might not exist in
-                    # this class but exists in the other class
-                    arr = np.bincount(arr, minlength=num_uniques)
-                    model_distribution["distribution"] = Distribution.CATEGORICAL.name
-                    model_parameters[f"y={category}"] = arr
-                    model_distribution["parameters"] = model_parameters
-                else:
-                    mu = np.mean(arr)
-                    sigma = np.std(arr, ddof=1)  # (n-1); Bessel's correction
-                    sigma += self.epsilon
-                    model_distribution["distribution"] = Distribution.GAUSSIAN.name
-                    model_parameters[f"y={category}"] = [mu, sigma]
-                    model_distribution["parameters"] = model_parameters
+        #         if feature_distributions[col] == Distribution.CATEGORICAL.value:
+        #             # The following line accounts for labels that might not exist in
+        #             # this class but exists in the other class
+        #             arr = np.bincount(arr, minlength=num_uniques)
+        #             model_distribution["distribution"] = Distribution.CATEGORICAL.name
+        #             model_parameters[f"y={category}"] = arr
+        #             model_distribution["parameters"] = model_parameters
+        #         else:
+        #             mu = np.mean(arr)
+        #             sigma = np.std(arr, ddof=1)  # (n-1); Bessel's correction
+        #             sigma += self.epsilon
+        #             model_distribution["distribution"] = Distribution.GAUSSIAN.name
+        #             model_parameters[f"y={category}"] = [mu, sigma]
+        #             model_distribution["parameters"] = model_parameters
 
-                self.models[f"x{col}"] = model_parameters
+        #         self.models[f"x{col}"] = model_parameters
 
-            self.models[f"x{col}"] = model_distribution
+        #     self.models[f"x{col}"] = model_distribution
 
         # logger.debug(self.models)
 
@@ -318,51 +359,87 @@ class MixedNB():
 
         validate_test_data(X_test, self.num_features)
 
-        # The next 23 lines (from `probabilities_samples_all = []` to
-        # `probabilities_samples_all = np.array(probabilities_samples_all)`
-        # can be understood by reading the innermost part
-        # (1. Get the prior probability) until the outermost (6. Repeat for all samples)
-        # Repeating for all samples goes through a for-loop, while the inner parts
-        # are calculated using nested list comprehensions.
-        probabilities_samples_all = []
+        X_test = np.array(X_test)
 
-        # 6. Repeat for all samples
-        for x_test in X_test:
-            probabilities_samples_one = [
-                # 4. Multiply all the posterior probabilities and prior probability
-                np.prod(
-                    # 3. Concatenate the posterior probabilities and prior probability
-                    np.concatenate([
-                        # 2. Get the posterior probability for each feature
-                        [self._posterior(feature_no, x_feature, y_class)
-                         for feature_no, x_feature in enumerate(x_test)],
-                        # 1. Get the prior probability
-                        np.expand_dims(self.prior[y_class],axis=0)
-                        # [self._prior(y_class)]
-                    ],
-                        axis=0))
-                # 5. Repeat for all classes
-                for y_class in range(self.num_classes)]
-            probabilities_samples_all.append(probabilities_samples_one)
-        probabilities_samples_all = np.array(probabilities_samples_all)
+        x_gaussian = X_test[:, self.gaussian_features]
+        logger.debug(f"x: {x_gaussian}")
 
-        # logger.debug(
-        #     f"Unnormalised probabilities:\n{probabilities_samples_all}")
+        mu = self.theta[:, np.newaxis]
+        logger.debug(f"mu: {mu}")
+        s = self.sigma[:, np.newaxis]
+        logger.debug(f"s: {s}")
 
-        # Normalise the class probabilities for each sample. For example,
-        # [[0.9,0.6],[0.1,0.2]]
-        # becomes
-        # [[0.9/1.5,0.6/1.5],[0.1/0.3,0.2/0.3]]
-        # Epsilon is added to prevent any division by zero, if any
-        normalising_constant = np.sum(
-            probabilities_samples_all, axis=1) + _EPSILON
-        normalised_probabilities_samples_all = \
-            probabilities_samples_all / normalising_constant[:, np.newaxis]
+        something = 1/np.sqrt(2*np.pi*s**2) * \
+            np.exp(-(x_gaussian-mu)**2/(2*s**2))
+        logger.debug(f"something: {something}")
 
-        # logger.debug(
-        #     f"Normalised probabilities:\n{normalised_probabilities_samples_all}")
+        t = np.prod(something, axis=2)[:, :, np.newaxis]
+        logger.debug(f"t: {t}")
 
-        return normalised_probabilities_samples_all
+        x_categorical = X_test[:, self.categorical_features]
+        logger.debug(f"x: {x_categorical}")
+        logger.debug(
+            f"categorical_posterior[0]: {self.categorical_posteriors[0]}")
+
+        probas = [categorical_posterior[:, X_test[:, i][:,np.newaxis].T]
+                  for i, categorical_posterior in enumerate(self.categorical_posteriors)]
+        logger.debug(f"probas {np.vstack(probas)}")
+
+        f = t * self.prior[:, np.newaxis][:, np.newaxis]
+        logger.debug(f"f: {f}")
+
+        normalised = f / np.sum(f, axis=0)
+        logger.debug(f"normalised {normalised}")
+
+        # raise NotFittedError
+
+        # # The next 23 lines (from `probabilities_samples_all = []` to
+        # # `probabilities_samples_all = np.array(probabilities_samples_all)`
+        # # can be understood by reading the innermost part
+        # # (1. Get the prior probability) until the outermost (6. Repeat for all samples)
+        # # Repeating for all samples goes through a for-loop, while the inner parts
+        # # are calculated using nested list comprehensions.
+        # probabilities_samples_all = []
+
+        # # 6. Repeat for all samples
+        # for x_test in X_test:
+        #     probabilities_samples_one = [
+        #         # 4. Multiply all the posterior probabilities and prior probability
+        #         np.prod(
+        #             # 3. Concatenate the posterior probabilities and prior probability
+        #             np.concatenate([
+        #                 # 2. Get the posterior probability for each feature
+        #                 [self._posterior(feature_no, x_feature, y_class)
+        #                  for feature_no, x_feature in enumerate(x_test)],
+        #                 # 1. Get the prior probability
+        #                 np.expand_dims(self.prior[y_class], axis=0)
+        #                 # [self._prior(y_class)]
+        #             ],
+        #                 axis=0))
+        #         # 5. Repeat for all classes
+        #         for y_class in range(self.num_classes)]
+        #     probabilities_samples_all.append(probabilities_samples_one)
+        # probabilities_samples_all = np.array(probabilities_samples_all)
+
+        # # logger.debug(
+        # #     f"Unnormalised probabilities:\n{probabilities_samples_all}")
+
+        # # Normalise the class probabilities for each sample. For example,
+        # # [[0.9,0.6],[0.1,0.2]]
+        # # becomes
+        # # [[0.9/1.5,0.6/1.5],[0.1/0.3,0.2/0.3]]
+        # # Epsilon is added to prevent any division by zero, if any
+        # normalising_constant = np.sum(
+        #     probabilities_samples_all, axis=1) + _EPSILON
+        # normalised_probabilities_samples_all = \
+        #     probabilities_samples_all / normalising_constant[:, np.newaxis]
+
+        # # logger.debug(
+        # #     f"Normalised probabilities:\n{normalised_probabilities_samples_all}")
+
+        # return normalised_probabilities_samples_all
+
+        return normalised
 
     def predict(self, X_test, verbose=False):
         """
@@ -378,7 +455,7 @@ class MixedNB():
             Predicted target values for X
         """
         probs = self.predict_proba(X_test, verbose)
-        return np.argmax(probs, axis=1)
+        return np.squeeze(np.argmax(probs, axis=0))
 
     def get_params(self):
         print(self.models)
@@ -422,6 +499,7 @@ def validate_test_data(X, num_features):
     if X.shape[1] != num_features:
         raise ValueError("Bad input shape of X_test. " +
                          f"Expected (,{num_features}) but got (,{X.shape[1]}) instead")
+
 
 def validate_inits(alpha, priors):
     if alpha < 0:
@@ -477,14 +555,16 @@ def validate_training_data(X_raw, y_raw, categorical_features):
 
 
 # from sklearn.datasets import load_digits
-# # from sklearn.naive_bayes import GaussianNB
-# from mixed_naive_bayes import MixedNB
+# from sklearn.naive_bayes import GaussianNB
+from mixed_naive_bayes import MixedNB, load_example
 
 # data = load_digits()
 # X = data.data
 # y = data.target
 
+X, y = load_example()
 
-# clf = MixedNB()
-# clf.fit(X,y)
-# print(clf.score(X,y))
+clf = MixedNB()
+clf.fit(X, y, [0, 1])
+print(clf.predict(X))
+print(clf.score(X, y))
