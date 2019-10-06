@@ -230,7 +230,7 @@ class MixedNB():
         logger.debug(self.prior)
         logger.debug(self.theta)
         logger.debug(self.sigma)
-        logger.debug(self.categorical_posteriors)
+        logger.debug(f"categorical posteriors: {self.categorical_posteriors}")
 
         # a = np.concatenate(
         #     [np.expand_dims(y, axis=0).reshape(-1, 1), X], axis=1)
