@@ -149,6 +149,7 @@ class MixedNB():
         -------
         self : object
         """
+        verify_inits(self.alpha, self.class_prior)
         verify_training_data(X, y, categorical_features)
 
         self.num_samples = X.shape[0]
@@ -399,6 +400,13 @@ def verify_test_data(X, num_features):
         raise ValueError("Bad input shape of X_test. " +
                          f"Expected (,{num_features}) but got (,{X.shape[1]}) instead")
 
+def verify_inits(alpha, priors):
+    if alpha < 0:
+        raise ValueError("alpha must be nonnegative.")
+
+    if np.sum(priors) != 1:
+        raise ValueError("The sum of the priors should be 1.")
+
 
 def verify_training_data(X_raw, y_raw, categorical_features):
     """Verifying user inputs
@@ -445,7 +453,7 @@ def verify_training_data(X_raw, y_raw, categorical_features):
 
 
 X, y = load_example()
-clf = MixedNB(alpha=0)
+clf = MixedNB(alpha=1, class_prior=[.9,.1])
 clf.fit(X, y, categorical_features=[0, 1])
 print(clf.score(X,y))
 # print(clf.predict_proba([[0, 0], [1, 1]]))
