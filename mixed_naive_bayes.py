@@ -12,14 +12,13 @@ Look at the example in `mixed_naive_bayes.MixedNB`.
 
 import warnings
 from enum import Enum
-import json
-import logging
+# import logging
 
 import numpy as np
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 # logging.basicConfig(level=logging.DEBUG, format='%(funcName)s: %(message)s')
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+# logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 _EPSILON = 1e-8
@@ -133,6 +132,10 @@ class MixedNB():
         self.epsilon = 1e-9
         self._is_fitted = False
 
+        self.prior = 0
+        self.theta = 0
+        self.sigma = 0
+
     def fit(self, X, y, categorical_features=[], verbose=False):
         """Fit Mixed Naive Bayes according to X, y
 
@@ -160,21 +163,25 @@ class MixedNB():
         self.num_samples = X.shape[0]
         self.num_features = X.shape[-1]
         self.num_classes = np.unique(y).size
-        logger.debug(f"No. of samples:  {self.num_samples}")
-        logger.debug(f"No. of features: {self.num_features}")
-        logger.debug(f"No. of classes:  {self.num_classes}")
+        # logger.debug(f"No. of samples:  {self.num_samples}")
+        # logger.debug(f"No. of features: {self.num_features}")
+        # logger.debug(f"No. of classes:  {self.num_classes}")
+        
+        self.prior = np.zeros((self.num_classes))
+        self.theta = np.zeros((self.num_classes, self.num_features))
+        self.sigma = np.zeros((self.num_classes, self.num_features))
 
         feature_distributions = [Distribution.CATEGORICAL.value
                                  if i in categorical_features
                                  else Distribution.GAUSSIAN.value
                                  for i in range(self.num_features)]
-        logger.debug(f"Distribution of each feature: \
-{[Distribution(i).name for i in feature_distributions]}")
+#         logger.debug(f"Distribution of each feature: \
+# {[Distribution(i).name for i in feature_distributions]}")
 
         row_indices_for_classes = [
             np.where(y == category)[0] for category in np.unique(y)]
-        logger.debug(
-            f"Row indices for the different classes: {row_indices_for_classes}")
+        # logger.debug(
+        #     f"Row indices for the different classes: {row_indices_for_classes}")
 
         # From https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/naive_bayes.py#L344
         # If the ratio of data variance between dimensions is too small, it
@@ -182,11 +189,12 @@ class MixedNB():
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
         self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
-        logger.debug(f"{self.epsilon}")
+        # logger.debug(f"{self.epsilon}")
 
         # Compute prior probabilities
         if self.class_prior is None:
             self.models["y"] = np.bincount(y)
+            self.prior = np.bincount(y)/self.num_samples
         else:
             self.models["y"] = np.squeeze(self.class_prior)
 
@@ -199,13 +207,13 @@ class MixedNB():
             # Count the number of unique labels for this column
             num_uniques = np.unique(X[:, col]).size
 
-            logger.debug(
-                f"Distribution for feature {col}: {Distribution(feature_distributions[col]).name}")
+            # logger.debug(
+            #     f"Distribution for feature {col}: {Distribution(feature_distributions[col]).name}")
 
             for category in range(self.num_classes):
 
                 arr = np.take(X[:, col], row_indices_for_classes[category])
-                logger.debug(f"Data for y={category}: {arr}")
+                # logger.debug(f"Data for y={category}: {arr}")
 
                 if feature_distributions[col] == Distribution.CATEGORICAL.value:
                     # The following line accounts for labels that might not exist in
@@ -226,7 +234,7 @@ class MixedNB():
 
             self.models[f"x{col}"] = model_distribution
 
-        logger.debug(self.models)
+        # logger.debug(self.models)
 
         self._is_fitted = True
         print("Model fitted")
@@ -254,7 +262,7 @@ class MixedNB():
             order, as they appear in the attribute `classes_`.
         """
         prob = self.models["y"][y_class]/self.num_samples
-        logger.info(f"p(y={y_class}) \t\t= {prob}")
+        # logger.debug(f"p(y={y_class}) \t\t= {prob}")
         return prob
 
     def _posterior(self, i, x, y_class):
@@ -286,7 +294,7 @@ class MixedNB():
             params = self.models[f"x{i}"]["parameters"][f"y={y_class}"]
             prob = normal_pdf(x, params[0], params[1])
 
-        logger.info(f"p(x_{i}={x}|y={y_class}) \t= {prob}")
+        # logger.debug(f"p(x_{i}={x}|y={y_class}) \t= {prob}")
 
         return prob
 
@@ -329,7 +337,8 @@ class MixedNB():
                         [self._posterior(feature_no, x_feature, y_class)
                          for feature_no, x_feature in enumerate(x_test)],
                         # 1. Get the prior probability
-                        [self._prior(y_class)]
+                        np.expand_dims(self.prior[y_class],axis=0)
+                        # [self._prior(y_class)]
                     ],
                         axis=0))
                 # 5. Repeat for all classes
@@ -337,8 +346,8 @@ class MixedNB():
             probabilities_samples_all.append(probabilities_samples_one)
         probabilities_samples_all = np.array(probabilities_samples_all)
 
-        logger.info(
-            f"Unnormalised probabilities:\n{probabilities_samples_all}")
+        # logger.debug(
+        #     f"Unnormalised probabilities:\n{probabilities_samples_all}")
 
         # Normalise the class probabilities for each sample. For example,
         # [[0.9,0.6],[0.1,0.2]]
@@ -350,8 +359,8 @@ class MixedNB():
         normalised_probabilities_samples_all = \
             probabilities_samples_all / normalising_constant[:, np.newaxis]
 
-        logger.info(
-            f"Normalised probabilities:\n{normalised_probabilities_samples_all}")
+        # logger.debug(
+        #     f"Normalised probabilities:\n{normalised_probabilities_samples_all}")
 
         return normalised_probabilities_samples_all
 
@@ -465,3 +474,17 @@ def validate_training_data(X_raw, y_raw, categorical_features):
             raise ValueError(f"Expected feature no. {feature_no} to have " +
                              f"{list(range(np.max(uniques)))} " +
                              f"unique values, but got {uniques} instead.")
+
+
+# from sklearn.datasets import load_digits
+# # from sklearn.naive_bayes import GaussianNB
+# from mixed_naive_bayes import MixedNB
+
+# data = load_digits()
+# X = data.data
+# y = data.target
+
+
+# clf = MixedNB()
+# clf.fit(X,y)
+# print(clf.score(X,y))

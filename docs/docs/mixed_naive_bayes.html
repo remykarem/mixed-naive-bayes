@@ -166,7 +166,7 @@ class MixedNB():
         self.epsilon = 1e-9
         self._is_fitted = False
 
-    def fit(self, X, y, categorical_features, verbose=False):
+    def fit(self, X, y, categorical_features=[], verbose=False):
         &#34;&#34;&#34;Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -451,7 +451,7 @@ def validate_inits(alpha, priors):
     if alpha &lt; 0:
         raise ValueError(&#34;alpha must be nonnegative.&#34;)
 
-    if np.sum(priors) != 1:
+    if priors is not None and np.sum(priors) != 1:
         raise ValueError(&#34;The sum of the priors should be 1.&#34;)
 
 
@@ -572,7 +572,7 @@ def validate_training_data(X_raw, y_raw, categorical_features):
     if alpha &lt; 0:
         raise ValueError(&#34;alpha must be nonnegative.&#34;)
 
-    if np.sum(priors) != 1:
+    if priors is not None and np.sum(priors) != 1:
         raise ValueError(&#34;The sum of the priors should be 1.&#34;)</code></pre>
 </details>
 </dd>
@@ -808,7 +808,7 @@ variances for calculation stability.</dd>
         self.epsilon = 1e-9
         self._is_fitted = False
 
-    def fit(self, X, y, categorical_features, verbose=False):
+    def fit(self, X, y, categorical_features=[], verbose=False):
         &#34;&#34;&#34;Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -1075,7 +1075,7 @@ variances for calculation stability.</dd>
 <h3>Methods</h3>
 <dl>
 <dt id="hey.mixed_naive_bayes.MixedNB.fit"><code class="name flex">
-<span>def <span class="ident">fit</span></span>(<span>self, X, y, categorical_features, verbose=False)</span>
+<span>def <span class="ident">fit</span></span>(<span>self, X, y, categorical_features=[], verbose=False)</span>
 </code></dt>
 <dd>
 <section class="desc"><p>Fit Mixed Naive Bayes according to X, y</p>
@@ -1101,7 +1101,7 @@ and n_features is the number of features.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def fit(self, X, y, categorical_features, verbose=False):
+<pre><code class="python">    def fit(self, X, y, categorical_features=[], verbose=False):
         &#34;&#34;&#34;Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
