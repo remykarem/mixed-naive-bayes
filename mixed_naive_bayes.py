@@ -133,7 +133,7 @@ class MixedNB():
         self.epsilon = 1e-9
         self._is_fitted = False
 
-    def fit(self, X, y, categorical_features, verbose=False):
+    def fit(self, X, y, categorical_features=[], verbose=False):
         """Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -418,7 +418,7 @@ def validate_inits(alpha, priors):
     if alpha < 0:
         raise ValueError("alpha must be nonnegative.")
 
-    if np.sum(priors) != 1:
+    if priors is not None and np.sum(priors) != 1:
         raise ValueError("The sum of the priors should be 1.")
 
 
@@ -465,10 +465,3 @@ def validate_training_data(X_raw, y_raw, categorical_features):
             raise ValueError(f"Expected feature no. {feature_no} to have " +
                              f"{list(range(np.max(uniques)))} " +
                              f"unique values, but got {uniques} instead.")
-
-
-X, y = load_example()
-clf = MixedNB(alpha=1, class_prior=[.9,.1])
-clf.fit(X, y, categorical_features=[0, 1])
-print(clf.score(X,y))
-# print(clf.predict_proba([[0, 0], [1, 1]]))
