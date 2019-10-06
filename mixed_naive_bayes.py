@@ -92,9 +92,9 @@ class MixedNB():
 
     Attributes
     ----------
-    class_prior_ : array, shape (n_classes,)
+    class_prior : array, shape (n_classes,)
         probability of each class.
-    epsilon_ : float
+    epsilon : float
         absolute additive value to variances
 
     References
@@ -123,6 +123,7 @@ class MixedNB():
         self.num_classes = 0
         self.models = {}
         self._is_fitted = False
+        self.epsilon = 1e-9
 
     def fit(self, X, y, categorical_features, verbose=False):
         """Fit Mixed Naive Bayes according to X, y
@@ -155,8 +156,6 @@ class MixedNB():
         logger.debug(f"No. of features: {self.num_features}")
         logger.debug(f"No. of classes:  {self.num_classes}")
 
-        warnings.warn("Ph hey!")
-
         feature_distributions = [Distribution.CATEGORICAL.value
                                  if i in categorical_features
                                  else Distribution.GAUSSIAN.value
@@ -168,6 +167,14 @@ class MixedNB():
             np.where(y == category)[0] for category in np.unique(y)]
         logger.debug(
             f"Row indices for the different classes: {row_indices_for_classes}")
+
+        # From https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/naive_bayes.py#L344
+        # If the ratio of data variance between dimensions is too small, it
+        # will cause numerical errors. To address this, we artificially
+        # boost the variance by epsilon, a small fraction of the standard
+        # deviation of the largest dimension.
+        self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
+        logger.debug(f"{self.epsilon}")
 
         # Compute prior probabilities
         if self.class_prior is None:
@@ -201,7 +208,8 @@ class MixedNB():
                     model_distribution["parameters"] = model_parameters
                 else:
                     mu = np.mean(arr)
-                    sigma = np.std(arr, ddof=1)  # (n-1); Bessel's corrections
+                    sigma = np.std(arr, ddof=1)  # (n-1); Bessel's correction
+                    sigma += self.epsilon
                     model_distribution["distribution"] = Distribution.GAUSSIAN.name
                     model_parameters[f"y={category}"] = [mu, sigma]
                     model_distribution["parameters"] = model_parameters
