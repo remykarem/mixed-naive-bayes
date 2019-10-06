@@ -82,8 +82,8 @@ class MixedNB():
     alpha : non-negative float, optional (default=0)
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
         This is for features with categorical distribution.
-    priors : array-like, shape (n_classes,)
-        Prior probabilities of the classes. If specified, the priors are not
+    class_prior : array-like, size (n_classes,), optional (default=None)
+        Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
     var_smoothing : float, optional (default=1e-9)
         Portion of the largest variance of all features that is added to
@@ -119,8 +119,9 @@ class MixedNB():
     >>> print(clf.predict([[0, 0]]))
     """
 
-    def __init__(self, alpha=0.0):
+    def __init__(self, alpha=0.0, class_prior=None):
         self.alpha = alpha
+        self.class_prior = class_prior
         self.num_samples = 0
         self.num_features = 0
         self.num_classes = 0
@@ -169,8 +170,11 @@ class MixedNB():
         logger.debug(
             f"Row indices for the different classes: {row_indices_for_classes}")
 
-        # Compute frequency counts for y
-        self.models["y"] = np.bincount(y)
+        # Compute prior probabilities
+        if self.class_prior is None:
+            self.models["y"] = np.bincount(y)
+        else:
+            self.models["y"] = np.squeeze(self.class_prior)
 
         # Compute statistics for x's
         for col in range(self.num_features):
