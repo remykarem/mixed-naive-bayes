@@ -96,6 +96,14 @@ class MixedNB():
         probability of each class.
     epsilon : float
         absolute additive value to variances
+    num_samples : int
+        number of training samples
+    num_features : int
+        number of features of X
+    num_classes : int
+        number of classes (number of layes of y)
+    models : array, shape (n_classes,)
+        the distribution for every feature and class
 
     References
     ----------
@@ -122,8 +130,8 @@ class MixedNB():
         self.num_features = 0
         self.num_classes = 0
         self.models = {}
-        self._is_fitted = False
         self.epsilon = 1e-9
+        self._is_fitted = False
 
     def fit(self, X, y, categorical_features, verbose=False):
         """Fit Mixed Naive Bayes according to X, y
@@ -146,8 +154,8 @@ class MixedNB():
         -------
         self : object
         """
-        verify_inits(self.alpha, self.class_prior)
-        verify_training_data(X, y, categorical_features)
+        validate_inits(self.alpha, self.class_prior)
+        validate_training_data(X, y, categorical_features)
 
         self.num_samples = X.shape[0]
         self.num_features = X.shape[-1]
@@ -300,7 +308,7 @@ class MixedNB():
         if not self._is_fitted:
             raise NotFittedError
 
-        verify_test_data(X_test, self.num_features)
+        validate_test_data(X_test, self.num_features)
 
         # The next 23 lines (from `probabilities_samples_all = []` to
         # `probabilities_samples_all = np.array(probabilities_samples_all)`
@@ -395,7 +403,7 @@ def normal_pdf(x, mu, sigma):
     return 1/np.sqrt(2*np.pi*sigma**2) * np.exp(-(x-mu)**2/(2*sigma**2))
 
 
-def verify_test_data(X, num_features):
+def validate_test_data(X, num_features):
     X = np.array(X)
 
     if X.ndim is not 2:
@@ -406,7 +414,7 @@ def verify_test_data(X, num_features):
         raise ValueError("Bad input shape of X_test. " +
                          f"Expected (,{num_features}) but got (,{X.shape[1]}) instead")
 
-def verify_inits(alpha, priors):
+def validate_inits(alpha, priors):
     if alpha < 0:
         raise ValueError("alpha must be nonnegative.")
 
@@ -414,10 +422,11 @@ def verify_inits(alpha, priors):
         raise ValueError("The sum of the priors should be 1.")
 
 
-def verify_training_data(X_raw, y_raw, categorical_features):
+def validate_training_data(X_raw, y_raw, categorical_features):
     """Verifying user inputs
 
     The following will be checked:
+
     - dimensions 
     - number of samples
     - data type (numbers only)
