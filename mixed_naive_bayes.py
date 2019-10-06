@@ -10,6 +10,7 @@ The API's design is similar to scikit-learn's.
 Look at the example in `mixed_naive_bayes.MixedNB`.
 """
 
+import warnings
 from enum import Enum
 import json
 import logging
@@ -93,12 +94,6 @@ class MixedNB():
     ----------
     class_prior_ : array, shape (n_classes,)
         probability of each class.
-    class_count_ : array, shape (n_classes,)
-        number of training samples observed in each class.
-    theta_ : array, shape (n_classes, n_features)
-        mean of each feature per class
-    sigma_ : array, shape (n_classes, n_features)
-        variance of each feature per class
     epsilon_ : float
         absolute additive value to variances
 
@@ -119,9 +114,10 @@ class MixedNB():
     >>> print(clf.predict([[0, 0]]))
     """
 
-    def __init__(self, alpha=0.0, class_prior=None):
+    def __init__(self, alpha=0.0, class_prior=None, var_smoothing=1e-9):
         self.alpha = alpha
         self.class_prior = class_prior
+        self.var_smoothing = var_smoothing
         self.num_samples = 0
         self.num_features = 0
         self.num_classes = 0
@@ -158,6 +154,8 @@ class MixedNB():
         logger.debug(f"No. of samples:  {self.num_samples}")
         logger.debug(f"No. of features: {self.num_features}")
         logger.debug(f"No. of classes:  {self.num_classes}")
+
+        warnings.warn("Ph hey!")
 
         feature_distributions = [Distribution.CATEGORICAL.value
                                  if i in categorical_features
