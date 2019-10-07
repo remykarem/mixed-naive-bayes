@@ -119,7 +119,6 @@ class MixedNB():
         self.num_classes = 0
         self.num_samples = 0
         self.num_features = 0
-        self.models = {}
         self.epsilon = 1e-9
         self._is_fitted = False
 
@@ -215,9 +214,6 @@ class MixedNB():
         self._is_fitted = True
         print("Model fitted")
 
-        if verbose:
-            print(self.models)
-
         return self
 
     def predict_proba(self, X_test, verbose=False):
@@ -261,15 +257,6 @@ class MixedNB():
             t = np.prod(something, axis=2)[:, :, np.newaxis]
             t = np.squeeze(t.T)
 
-            # For every y_class and sample,
-            # multiply the previous product 
-            # with the respective priors
-            # (num_classes, num_samples, 1)
-            # f = t * self.prior[:, np.newaxis][:, np.newaxis]
-
-            # (num_classes, num_samples, 1)
-            # normalised = f / np.sum(f, axis=0)
-
             # logger.debug(f"x: {x_gaussian}")
             # logger.debug(f"mu: {mu}")
             # logger.debug(f"s: {s}")
@@ -294,11 +281,6 @@ class MixedNB():
 
             # (num_samples, num_classes)
             p = np.prod(r, axis=2).T
-
-            # (num_samples, num_classes)
-            # q = p.T * self.prior
-
-            # categorical_normalised = np.moveaxis(q.T/np.sum(q.T,axis=0), [0,1], [1,0])
 
         if self.gaussian_features.size != 0 and self.categorical_features.size != 0:
             finals = t * p *  self.prior
@@ -431,8 +413,8 @@ y = data.target
 
 # X, y = load_example()
 
-clf = MixedNB()
-clf.fit(X, y, [])
+clf = GaussianNB()
+clf.fit(X, y)
 tic = time.time()
 clf.predict(X)
 toc = time.time()
