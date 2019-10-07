@@ -19,10 +19,5 @@ print(len(X))
 
 # clf = GaussianNB()
 clf = MixedNB()
-clf.fit(X,y)
-tic = time.time()
+clf.fit(X,y, list(range(16)))
 print(clf.score(X,y))
-toc = time.time()
-
-
-print(toc-tic)

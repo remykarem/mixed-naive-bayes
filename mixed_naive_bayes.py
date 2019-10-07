@@ -114,7 +114,7 @@ class MixedNB():
 
     def __init__(self, alpha=0.0, class_prior=None, var_smoothing=1e-9):
         self.alpha = alpha
-        self.prior = class_prior
+        self.class_prior = class_prior
         self.var_smoothing = var_smoothing
         self.num_classes = 0
         self.num_samples = 0
@@ -150,17 +150,15 @@ class MixedNB():
         -------
         self : object
         """
-        validate_inits(self.alpha, self.prior)
+        validate_inits(self.alpha, self.class_prior)
         validate_training_data(X, y, categorical_features)
 
         self.categorical_features = np.array(categorical_features)
+        print(self.categorical_features.dtype)
 
         self.num_classes = np.unique(y).size
         self.num_samples = X.shape[0]
         self.num_features = X.shape[-1]
-        # logger.debug(f"No. of samples:  {self.num_samples}")
-        # logger.debug(f"No. of features: {self.num_features}")
-        # logger.debug(f"No. of classes:  {self.num_classes}")
 
         # From https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/naive_bayes.py#L344
         # If the ratio of data variance between dimensions is too small, it
@@ -168,14 +166,13 @@ class MixedNB():
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
         self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
-        # logger.debug(f"{self.epsilon}")
 
         self.gaussian_features = np.delete(
-            np.arange(self.num_features), categorical_features)
+            np.arange(self.num_features), self.categorical_features)
 
         # How many categories are there in each categorical_feature
         # Add 1 due to zero-indexing
-        max_categories = np.max(X[:, categorical_features], axis=0) + 1
+        max_categories = np.max(X[:, self.categorical_features], axis=0).astype(np.int64) + 1
 
         # Prepare empty array
         self.prior = np.zeros((self.num_classes))
@@ -199,17 +196,11 @@ class MixedNB():
                 self.sigma[y_i, :] = np.std(x, ddof=1, axis=0)
 
             if self.categorical_features.size != 0:
-                for categorical_feature in categorical_features:
+                for categorical_feature in self.categorical_features:
                     dist = np.bincount(X[y == y_i, :][:, categorical_feature],
                                     minlength=max_categories[categorical_feature])
                     self.categorical_posteriors[categorical_feature][y_i,
                                                                     :] = dist/np.sum(dist)
-
-        # logger.debug(self.prior)
-        # logger.debug(self.theta)
-        # logger.debug(self.sigma)
-        # logger.debug(f"categorical posteriors: {self.categorical_posteriors}")
-
 
         self._is_fitted = True
         print("Model fitted")
@@ -257,23 +248,17 @@ class MixedNB():
             t = np.prod(something, axis=2)[:, :, np.newaxis]
             t = np.squeeze(t.T)
 
-            # logger.debug(f"x: {x_gaussian}")
-            # logger.debug(f"mu: {mu}")
-            # logger.debug(f"s: {s}")
-            # logger.debug(f"something: {something}")
-            # logger.debug(f"t: {t}")
-            # logger.debug(f"f: {f}")
-            # logger.debug(f"normalised {normalised}")
-
 
         if self.categorical_features.size != 0:
+
+            # Cast tensor to int
+            X = X_test[:, self.categorical_features].astype(np.int64)
 
             # A list of length=num_features. 
             # Each item in the list contains the distributions for the y_classes
             # Shape of each item is (num_classes,1,num_samples)
             probas = [categorical_posterior[:, X_test[:, i][:,np.newaxis]]
                     for i, categorical_posterior in enumerate(self.categorical_posteriors)]
-            # logger.debug(f"probas {np.vstack(probas)}")
 
             r = np.concatenate([probas], axis=0)
             r = np.squeeze(r)
@@ -395,27 +380,27 @@ def validate_training_data(X_raw, y_raw, categorical_features):
                          "Encode your data using sklearn's LabelEncoder.")
 
     for feature_no in categorical_features:
-        uniques = np.unique(X[:, feature_no])
+        uniques = np.unique(X[:, feature_no]).astype(np.int64)
         if not np.array_equal(uniques, list(range(np.max(uniques)+1))):
             raise ValueError(f"Expected feature no. {feature_no} to have " +
                              f"{list(range(np.max(uniques)))} " +
                              f"unique values, but got {uniques} instead.")
 
 
-from sklearn.datasets import load_breast_cancer
-from sklearn.naive_bayes import GaussianNB
-from mixed_naive_bayes import MixedNB, load_example
-import time
+# from sklearn.datasets import load_breast_cancer
+# from sklearn.naive_bayes import GaussianNB
+# from mixed_naive_bayes import MixedNB, load_example
+# import time
 
-data = load_breast_cancer()
-X = data.data
-y = data.target
+# data = load_breast_cancer()
+# X = data.data
+# y = data.target
 
-# X, y = load_example()
+# # X, y = load_example()
 
-clf = GaussianNB()
-clf.fit(X, y)
-tic = time.time()
-clf.predict(X)
-toc = time.time()
-print(toc-tic)
+# clf = GaussianNB()
+# clf.fit(X, y)
+# tic = time.time()
+# clf.predict(X)
+# toc = time.time()
+# print(toc-tic)
