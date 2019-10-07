@@ -361,6 +361,10 @@ class MixedNB():
 
         X_test = np.array(X_test)
 
+
+
+
+
         x_gaussian = X_test[:, self.gaussian_features]
         # logger.debug(f"x: {x_gaussian}")
 
@@ -376,6 +380,15 @@ class MixedNB():
         t = np.prod(something, axis=2)[:, :, np.newaxis]
         # logger.debug(f"t: {t}")
 
+        f = t * self.prior[:, np.newaxis][:, np.newaxis]
+        # logger.debug(f"f: {f}")
+
+        normalised = f / np.sum(f, axis=0)
+        # logger.debug(f"normalised {normalised}")
+
+
+
+
         x_categorical = X_test[:, self.categorical_features]
         logger.debug(f"x: {x_categorical}")
         logger.debug(
@@ -387,11 +400,16 @@ class MixedNB():
                   for i, categorical_posterior in enumerate(self.categorical_posteriors)]
         logger.debug(f"probas {np.vstack(probas)}")
 
-        f = t * self.prior[:, np.newaxis][:, np.newaxis]
-        # logger.debug(f"f: {f}")
+        r = np.concatenate([probas], axis=0)
+        p = np.prod(r, axis=0)
+        p = np.squeeze(p)
+        q = p.T * self.prior
+        categorical_normalised = np.moveaxis(q.T/np.sum(q.T,axis=0), [0,1], [1,0])
 
-        normalised = f / np.sum(f, axis=0)
-        # logger.debug(f"normalised {normalised}")
+
+
+
+        
 
         # raise NotFittedError
 
