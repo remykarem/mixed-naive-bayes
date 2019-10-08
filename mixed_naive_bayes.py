@@ -10,55 +10,7 @@ The API's design is similar to scikit-learn's.
 Look at the example in `mixed_naive_bayes.MixedNB`.
 """
 
-# import logging
 import numpy as np
-
-# logger = logging.getLogger(__name__)
-# logging.basicConfig(level=logging.DEBUG, format='%(funcName)s: %(message)s')
-# logging.basicConfig(level=logging.INFO, format='%(message)s')
-
-
-_EPSILON = 1e-8
-
-
-class NotFittedError(Exception):
-    """
-    Exception class for cases when the predict API is called before
-    model is fitted.
-    """
-
-    def __str__(self):
-        return "This MixedNB instance is not fitted yet. Call 'fit' \
-            with appropriate arguments before using this method."
-
-
-def load_example():
-    """Load an example dataset"""
-    # Assume all data flushed to 0
-    X0 = [[0, 0], [1, 1], [1, 0], [0, 1], [1, 1],
-          [2, 1], [0, 2], [2, 2], [1, 1], [0, 2]]
-    X1 = [[180, 75], [165, 61], [167, 62],
-          [178, 63], [174, 69], [166, 60],
-          [167, 59], [165, 60], [173, 68],
-          [178, 71]]
-    X = [[0, 0, 180, 75],
-         [1, 1, 165, 61],
-         [1, 0, 167, 62],
-         [0, 1, 178, 63],
-         [1, 1, 174, 69],
-         [2, 1, 166, 60],
-         [0, 2, 167, 59],
-         [2, 2, 165, 60],
-         [1, 1, 173, 68],
-         [0, 2, 178, 71]]
-    y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
-    # X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
-    #      [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
-    # y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
-    X = np.array(X)
-    y = np.array(y)
-
-    return X, y
 
 
 class MixedNB():
@@ -114,22 +66,19 @@ class MixedNB():
 
     def __init__(self, alpha=0.0, class_prior=None, var_smoothing=1e-9):
         self.alpha = alpha
-        self.class_prior = class_prior
         self.var_smoothing = var_smoothing
-        self.num_classes = 0
-        self.num_samples = 0
         self.num_features = 0
         self.epsilon = 1e-9
         self._is_fitted = False
 
-        self.prior = []
+        self.prior = class_prior
         self.theta = []
         self.sigma = []
         self.categorical_posteriors = []
         self.gaussian_features = []
         self.categorical_features = []
 
-    def fit(self, X, y, categorical_features=[], verbose=False):
+    def fit(self, X, y, categorical_features=None):
         """Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -150,54 +99,58 @@ class MixedNB():
         -------
         self : object
         """
-        validate_inits(self.alpha, self.class_prior)
-        validate_training_data(X, y, categorical_features)
-
-        self.categorical_features = np.array(categorical_features)
-        print(self.categorical_features.dtype)
-
-        self.num_classes = np.unique(y).size
-        self.num_samples = X.shape[0]
-        self.num_features = X.shape[-1]
+        self.categorical_features = categorical_features
+        validate_inits(self.alpha, self.prior)
+        validate_training_data(X, y, self.categorical_features)
+        
+        num_classes = np.unique(y).size
+        num_samples, self.num_features = X.shape
+        
+        if self.prior is None:
+            self.prior = np.bincount(y)/num_samples
+        else:
+            self.prior = np.array(self.prior)
+        
+        if self.categorical_features is None:
+            self.categorical_features = []
+        self.categorical_features = np.array(self.categorical_features).astype(int)
 
         # From https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/naive_bayes.py#L344
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
+        self.epsilon = np.sqrt(self.var_smoothing) * np.std(X, ddof=0, axis=0).max()
 
         self.gaussian_features = np.delete(
             np.arange(self.num_features), self.categorical_features)
+        print(self.categorical_features)
+        print(self.gaussian_features)
 
         # How many categories are there in each categorical_feature
         # Add 1 due to zero-indexing
-        max_categories = np.max(X[:, self.categorical_features], axis=0).astype(np.int64) + 1
+        max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
+        max_categories = max_categories.astype(int)
 
-        # Prepare empty array
-        self.prior = np.zeros((self.num_classes))
-        self.theta = np.zeros((self.num_classes, len(self.gaussian_features)))
-        self.sigma = np.zeros((self.num_classes, len(self.gaussian_features)))
+        # Prepare empty arrays
+        self.theta = np.zeros((num_classes, len(self.gaussian_features)))
+        self.sigma = np.zeros((num_classes, len(self.gaussian_features)))
         self.categorical_posteriors = [
-            np.zeros((self.num_classes, num_categories))
+            np.zeros((num_classes, num_categories))
             for num_categories in max_categories]
-
-        # Compute prior probabilities
-        if self.prior is None:
-            self.prior = np.bincount(y)/self.num_samples
 
         for y_i in np.unique(y):
 
             if self.gaussian_features.size != 0:
-                # TODO experiment the assignment below
                 x = X[y == y_i, :][:, self.gaussian_features]
                 self.theta[y_i, :] = np.mean(x, axis=0)
                 # Bessel's correction; n-1
                 self.sigma[y_i, :] = np.std(x, ddof=1, axis=0)
 
             if self.categorical_features.size != 0:
+                x = X[y == y_i, :][:, self.categorical_features]
                 for categorical_feature in self.categorical_features:
-                    dist = np.bincount(X[y == y_i, :][:, categorical_feature],
+                    dist = np.bincount(X[y == y_i, :][:, categorical_feature].astype(int),
                                     minlength=max_categories[categorical_feature])
                     self.categorical_posteriors[categorical_feature][y_i,
                                                                     :] = dist/np.sum(dist)
@@ -226,21 +179,20 @@ class MixedNB():
             raise NotFittedError
 
         validate_test_data(X_test, self.num_features)
-
         X_test = np.array(X_test)
-
 
         if self.gaussian_features.size != 0:
             x_gaussian = X_test[:, self.gaussian_features]
             mu = self.theta[:, np.newaxis]
             s = self.sigma[:, np.newaxis]
+            s = s + self.epsilon
 
             # For every y_class and feature,
             # take values of x's from the samples 
             # to get its likelihood
             # (num_classes, num_samples, num_features)
-            something = 1/np.sqrt(2*np.pi*s**2) * \
-                np.exp(-(x_gaussian-mu)**2/(2*s**2))
+            something = 1/np.sqrt(2.*np.pi*(s**2.)) * \
+                np.exp(-((x_gaussian-mu)**2.)/(2.*(s**2.)))
 
             # For every y_class and sample, 
             # multiply all the features
@@ -252,12 +204,12 @@ class MixedNB():
         if self.categorical_features.size != 0:
 
             # Cast tensor to int
-            X = X_test[:, self.categorical_features].astype(np.int64)
+            X = X_test[:, self.categorical_features].astype(int)
 
             # A list of length=num_features. 
             # Each item in the list contains the distributions for the y_classes
             # Shape of each item is (num_classes,1,num_samples)
-            probas = [categorical_posterior[:, X_test[:, i][:,np.newaxis]]
+            probas = [categorical_posterior[:, X[:, i][:,np.newaxis]]
                     for i, categorical_posterior in enumerate(self.categorical_posteriors)]
 
             r = np.concatenate([probas], axis=0)
@@ -270,9 +222,9 @@ class MixedNB():
         if self.gaussian_features.size != 0 and self.categorical_features.size != 0:
             finals = t * p *  self.prior
         elif self.gaussian_features.size != 0:
-            finals = t *  self.prior
+            finals = t * self.prior
         elif self.categorical_features.size != 0:
-            finals = p *  self.prior
+            finals = p * self.prior + self.alpha
 
         normalised = finals.T/np.sum(finals, axis=1)
         normalised = np.moveaxis(normalised, [0,1], [1,0])
@@ -296,7 +248,11 @@ class MixedNB():
         return np.argmax(probs, axis=1)
 
     def get_params(self):
-        print(self.models)
+        return {
+            'alpha': self.alpha,
+            'priors': self.priors,
+            'var_smoothing': self.var_smoothing
+        }
 
     def score(self, X, y):
         """Returns the mean accuracy on the given test data and labels.
@@ -322,6 +278,17 @@ class MixedNB():
         return np.sum(bool_comparison) / bool_comparison.size
 
 
+class NotFittedError(Exception):
+    """
+    Exception class for cases when the predict API is called before
+    model is fitted.
+    """
+
+    def __str__(self):
+        return "This MixedNB instance is not fitted yet. Call 'fit' \
+            with appropriate arguments before using this method."
+
+
 def validate_test_data(X, num_features):
     X = np.array(X)
 
@@ -335,6 +302,7 @@ def validate_test_data(X, num_features):
 
 
 def validate_inits(alpha, priors):
+    
     if alpha < 0:
         raise ValueError("alpha must be nonnegative.")
 
@@ -379,28 +347,39 @@ def validate_training_data(X_raw, y_raw, categorical_features):
                          f"but got type {y.dtype} instead. For categorical variables, " +
                          "Encode your data using sklearn's LabelEncoder.")
 
-    for feature_no in categorical_features:
-        uniques = np.unique(X[:, feature_no]).astype(np.int64)
-        if not np.array_equal(uniques, list(range(np.max(uniques)+1))):
-            raise ValueError(f"Expected feature no. {feature_no} to have " +
-                             f"{list(range(np.max(uniques)))} " +
-                             f"unique values, but got {uniques} instead.")
+#     if categorical_features is not None:
+#         for feature_no in categorical_features:
+#             uniques = np.unique(X[:, feature_no]).astype(int)
+#             if not np.array_equal(uniques, list(range(np.max(uniques)+1))):
+#                 raise ValueError(f"Expected feature no. {feature_no} to have " +
+#                                  f"{list(range(np.max(uniques)))} " +
+#                                  f"unique values, but got {uniques} instead.")
 
 
-# from sklearn.datasets import load_breast_cancer
-# from sklearn.naive_bayes import GaussianNB
-# from mixed_naive_bayes import MixedNB, load_example
-# import time
+def load_example():
+    """Load an example dataset"""
+    # Assume all data flushed to 0
+    X0 = [[0, 0], [1, 1], [1, 0], [0, 1], [1, 1],
+          [2, 1], [0, 2], [2, 2], [1, 1], [0, 2]]
+    X1 = [[180, 75], [165, 61], [167, 62],
+          [178, 63], [174, 69], [166, 60],
+          [167, 59], [165, 60], [173, 68],
+          [178, 71]]
+    X = [[0, 0, 180, 75],
+         [1, 1, 165, 61],
+         [1, 0, 167, 62],
+         [0, 1, 178, 63],
+         [1, 1, 174, 69],
+         [2, 1, 166, 60],
+         [0, 2, 167, 59],
+         [2, 2, 165, 60],
+         [1, 1, 173, 68],
+         [0, 2, 178, 71]]
+    y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
+    # X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
+    #      [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
+    # y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
+    X = np.array(X)
+    y = np.array(y)
 
-# data = load_breast_cancer()
-# X = data.data
-# y = data.target
-
-# # X, y = load_example()
-
-# clf = GaussianNB()
-# clf.fit(X, y)
-# tic = time.time()
-# clf.predict(X)
-# toc = time.time()
-# print(toc-tic)
+    return X, y

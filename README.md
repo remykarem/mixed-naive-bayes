@@ -42,8 +42,8 @@ Comparing performance with `sklearn`:
 
 ## To-Dos
 
-- [ ] Variance smoothing for Gaussian distribution
 - [ ] Regulariser for categorical distribution
+- [X] Variance smoothing for Gaussian distribution
 - [X] Vectorised main operations using NumPy
 
 Possible features:
