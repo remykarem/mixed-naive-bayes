@@ -10,12 +10,14 @@ The API's design is similar to scikit-learn's.
 Look at the example in `mixed_naive_bayes.MixedNB`.
 """
 
+import warnings
 import numpy as np
 
+_ALPHA_MIN = 1e-10
 
 class MixedNB():
     """
-    Naive Bayes classifier for categorical and Gaussian models.
+    Naive Bayes classifier for Categorical and Gaussian models.
 
     Note: MixedNB expects that for each feature, all possible classes
     are in the dataset or encoded.
@@ -25,7 +27,7 @@ class MixedNB():
     alpha : non-negative float, optional (default=0)
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
         This is for features with categorical distribution.
-    class_prior : array-like, size (n_classes,), optional (default=None)
+    class_prior : array-like, size (num_classes,), optional (default=None)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
     var_smoothing : float, optional (default=1e-9)
@@ -34,7 +36,7 @@ class MixedNB():
 
     Attributes
     ----------
-    class_prior : array, shape (n_classes,)
+    class_prior : array, shape (num_classes,)
         probability of each class.
     epsilon : float
         absolute additive value to variances
@@ -44,7 +46,7 @@ class MixedNB():
         number of features of X
     num_classes : int
         number of classes (number of layes of y)
-    models : array, shape (n_classes,)
+    models : array, shape (num_classes,)
         the distribution for every feature and class
 
     References
@@ -64,19 +66,20 @@ class MixedNB():
     >>> print(clf.predict([[0, 0]]))
     """
 
-    def __init__(self, alpha=0.0, class_prior=None, var_smoothing=1e-9):
+    def __init__(self, alpha=0.5, priors=None, var_smoothing=1e-9):
         self.alpha = alpha
         self.var_smoothing = var_smoothing
         self.num_features = 0
         self.epsilon = 1e-9
         self._is_fitted = False
 
-        self.prior = class_prior
+        self.gaussian_features = []
+        self.categorical_features = []
+        self.priors = priors
         self.theta = []
         self.sigma = []
         self.categorical_posteriors = []
-        self.gaussian_features = []
-        self.categorical_features = []
+        
 
     def fit(self, X, y, categorical_features=None):
         """Fit Mixed Naive Bayes according to X, y
@@ -87,10 +90,10 @@ class MixedNB():
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
+        X : array-like, shape (num_samples, n_features)
+            Training vectors, where num_samples is the number of samples
             and n_features is the number of features.
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (num_samples,)
             Target values.
         categorical_features : array
             Columns which have categorical feature_distributions
@@ -100,20 +103,10 @@ class MixedNB():
         self : object
         """
         self.categorical_features = categorical_features
-        validate_inits(self.alpha, self.prior)
-        validate_training_data(X, y, self.categorical_features)
-        y = np.array(y).astype(int)
-        num_classes = np.unique(y).size
-        num_samples, self.num_features = X.shape
-        
-        if self.prior is None:
-            self.prior = np.bincount(y)/num_samples
-        else:
-            self.prior = np.array(self.prior)
-        
-        if self.categorical_features is None:
-            self.categorical_features = []
-        self.categorical_features = np.array(self.categorical_features).astype(int)
+        # Validate inputs
+        self.alpha = _validate_inits(self.alpha)
+        _validate_training_data(
+            X, y, self.categorical_features)
 
         # From https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/naive_bayes.py#L344
         # If the ratio of data variance between dimensions is too small, it
@@ -122,6 +115,29 @@ class MixedNB():
         # deviation of the largest dimension.
         self.epsilon = np.sqrt(self.var_smoothing) * np.std(X, ddof=0, axis=0).max()
 
+        # Get whatever that is needed
+        y = np.array(y).astype(int)
+        num_classes = np.unique(y).size
+        num_samples, self.num_features = X.shape
+        
+        # Correct the inputs
+        if self.priors is None:
+            self.priors = np.bincount(y)/num_samples
+        else:
+            priors = np.asarray(self.priors)
+            if len(priors) != num_classes:
+                raise ValueError('Number of priors must match number of classes.')
+            if np.isclose(priors.sum()) != 1.0:
+                raise ValueError("The sum of the priors should be 1.")
+            if (priors < 0).any():
+                raise ValueError('Priors must be non-negative.')
+            self.priors = priors
+
+        if self.categorical_features is None:
+            self.categorical_features = []
+
+        # Get the index columns of the discrete data and continuous data
+        self.categorical_features = np.array(self.categorical_features).astype(int)
         self.gaussian_features = np.delete(
             np.arange(self.num_features), self.categorical_features)
 
@@ -132,8 +148,9 @@ class MixedNB():
         print(f"Max categories: {max_categories}")
 
         # Prepare empty arrays
-        self.theta = np.zeros((num_classes, len(self.gaussian_features)))
-        self.sigma = np.zeros((num_classes, len(self.gaussian_features)))
+        if self.gaussian_features.size != 0:
+            self.theta = np.zeros((num_classes, len(self.gaussian_features)))
+            self.sigma = np.zeros((num_classes, len(self.gaussian_features)))
         if self.categorical_features.size != 0:
             self.categorical_posteriors = [
                 np.zeros((num_classes, num_categories))
@@ -166,19 +183,19 @@ class MixedNB():
 
         Parameters
         ----------
-        X_test : array-like, shape = [n_samples, n_features]
+        X_test : array-like, shape = [num_samples, num_features]
 
         Returns
         -------
-        C : array-like, shape = [n_samples, n_classes]
+        C : array-like, shape = [num_samples, num_classes]
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
         """
         if not self._is_fitted:
             raise NotFittedError
+        _validate_test_data(X_test, self.num_features)
 
-        validate_test_data(X_test, self.num_features)
         X_test = np.array(X_test)
 
         if self.gaussian_features.size != 0:
@@ -200,7 +217,6 @@ class MixedNB():
             t = np.prod(something, axis=2)[:, :, np.newaxis]
             t = np.squeeze(t.T)
 
-
         if self.categorical_features.size != 0:
 
             # Cast tensor to int
@@ -213,45 +229,50 @@ class MixedNB():
                     for i, categorical_posterior in enumerate(self.categorical_posteriors)]
 
             r = np.concatenate([probas], axis=0)
-            print(r.shape)
+            # print(r.shape)
             r = np.squeeze(r, axis=-1)
-            print(r.shape)
+            # print(r.shape)
             r = np.moveaxis(r, [0,1,2], [2,0,1])
 
             # (num_samples, num_classes)
             p = np.prod(r, axis=2).T
 
         if self.gaussian_features.size != 0 and self.categorical_features.size != 0:
-            finals = t * p *  self.prior
+            finals = t * p *  self.priors
         elif self.gaussian_features.size != 0:
-            finals = t * self.prior
+            finals = t * self.priors
         elif self.categorical_features.size != 0:
-            finals = p * self.prior + self.alpha
-        
-#         print(f"Sum: {np.sum(finals.T, axis=1)}")
+            finals = p * self.priors + self.alpha
 
         normalised = finals.T/np.sum(finals, axis=1)
         normalised = np.moveaxis(normalised, [0,1], [1,0])
 
         return normalised
 
-    def predict(self, X_test, verbose=False):
+    def predict(self, X, verbose=False):
         """
         Perform classification on an array of test vectors X.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [num_samples, n_features]
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape = [num_samples]
             Predicted target values for X
         """
-        probs = self.predict_proba(X_test, verbose)
+        probs = self.predict_proba(X, verbose)
         return np.argmax(probs, axis=1)
 
     def get_params(self):
+        """Get parameters for this model.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
         return {
             'alpha': self.alpha,
             'priors': self.priors,
@@ -263,12 +284,10 @@ class MixedNB():
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape = (num_samples, n_features)
             Test samples.
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like, shape = (num_samples) 
             True labels for X.
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
 
         Returns
         -------
@@ -279,7 +298,7 @@ class MixedNB():
         y_predicted = np.array(self.predict(X))
         bool_comparison = y_true == y_predicted
 
-        return np.sum(bool_comparison) / bool_comparison.size
+        return np.sum(bool_comparison) / bool_comparison.size    
 
 
 class NotFittedError(Exception):
@@ -293,7 +312,7 @@ class NotFittedError(Exception):
             with appropriate arguments before using this method."
 
 
-def validate_test_data(X, num_features):
+def _validate_test_data(X, num_features):
     X = np.array(X)
 
     if X.ndim is not 2:
@@ -305,16 +324,24 @@ def validate_test_data(X, num_features):
                          f"Expected (,{num_features}) but got (,{X.shape[1]}) instead")
 
 
-def validate_inits(alpha, priors):
-    
+def _validate_inits(alpha):
+
+    if not isinstance(alpha, (int, float)):
+        raise TypeError('Expected smoothing parameter alpha to be int or float.')
+
     if alpha < 0:
-        raise ValueError("alpha must be nonnegative.")
+        raise ValueError('Expected smoothing parameter alpha > 0. '
+                            f'Got {alpha}.')
+                                
+    if alpha < _ALPHA_MIN:
+        warnings.warn('alpha too small will result in numeric errors, '
+                        f'setting alpha = {_ALPHA_MIN}')
+        alpha = _ALPHA_MIN
 
-    if priors is not None and np.sum(priors) != 1:
-        raise ValueError("The sum of the priors should be 1.")
+    return alpha
 
 
-def validate_training_data(X_raw, y_raw, categorical_features):
+def _validate_training_data(X_raw, y_raw, categorical_features):
     """Verifying user inputs
 
     The following will be checked:
@@ -330,11 +357,11 @@ def validate_training_data(X_raw, y_raw, categorical_features):
 
     if X.ndim is not 2:
         raise ValueError("Bad input shape of X. " +
-                         f"Expected 2D array, but got dim {X.ndim} instead. " +
+                         f"Expected 2D array, but got {X.ndim}D instead. " +
                          "Reshape your data accordingly.")
     if y.ndim is not 1:
         raise ValueError("Bad input shape of y. " +
-                         f"Expected 2D array, but got dim {y.ndim} instead. " +
+                         f"Expected 1D array, but got {y.ndim}D instead. " +
                          "Reshape your data accordingly.")
 
     if X.shape[0] != y.shape[0]:

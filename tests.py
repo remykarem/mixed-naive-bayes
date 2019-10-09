@@ -4,6 +4,8 @@
 Test cases for Mixed Naive Bayes.
 - User inputs
 - Correctness
+    - discrete data
+    - continuous data
 """
 
 import pytest
@@ -15,15 +17,20 @@ from sklearn.naive_bayes import GaussianNB
 from mixed_naive_bayes import MixedNB, load_example
 
 
+def test_input_param():
+    clf = MixedNB(alpha='l')
+    with pytest.raises(TypeError):
+        clf.fit([0,1,2], [0,1,0])
+
 def test_input_string():
     clf = MixedNB()
     with pytest.raises(ValueError):
-        clf.fit(X=[['X'],['y']], y=[0,1], categorical_features=[0])
+        clf.fit([['X'],['y']], [0,1], [0])
 
 def test_input_wrong_shape():
     clf = MixedNB()
     with pytest.raises(ValueError):
-        clf.fit(X=[0,1,2], y=[0,1], categorical_features=[0])
+        clf.fit([0,1,2], [0,1], [0])
 
 def test_continuous_data_iris():
     iris = load_iris()
@@ -101,7 +108,7 @@ def test_categorical_data_digits():
     X = digits.data
     y = digits.target
     
-    mixed_nb = MixedNB(alpha=0)
+    mixed_nb = MixedNB()
     mixed_nb.fit(X[:1440],y[:1440],list(range(64)))
     mixed_nb_score = mixed_nb.score(X[:1440],y[:1440])
     
