@@ -102,7 +102,7 @@ class MixedNB():
         self.categorical_features = categorical_features
         validate_inits(self.alpha, self.prior)
         validate_training_data(X, y, self.categorical_features)
-        
+        y = np.array(y).astype(int)
         num_classes = np.unique(y).size
         num_samples, self.num_features = X.shape
         
@@ -124,20 +124,20 @@ class MixedNB():
 
         self.gaussian_features = np.delete(
             np.arange(self.num_features), self.categorical_features)
-        print(self.categorical_features)
-        print(self.gaussian_features)
 
         # How many categories are there in each categorical_feature
         # Add 1 due to zero-indexing
         max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
         max_categories = max_categories.astype(int)
+        print(f"Max categories: {max_categories}")
 
         # Prepare empty arrays
         self.theta = np.zeros((num_classes, len(self.gaussian_features)))
         self.sigma = np.zeros((num_classes, len(self.gaussian_features)))
-        self.categorical_posteriors = [
-            np.zeros((num_classes, num_categories))
-            for num_categories in max_categories]
+        if self.categorical_features.size != 0:
+            self.categorical_posteriors = [
+                np.zeros((num_classes, num_categories))
+                for num_categories in max_categories]
 
         for y_i in np.unique(y):
 
@@ -149,11 +149,11 @@ class MixedNB():
 
             if self.categorical_features.size != 0:
                 x = X[y == y_i, :][:, self.categorical_features]
-                for categorical_feature in self.categorical_features:
+                for i, categorical_feature in enumerate(self.categorical_features):
                     dist = np.bincount(X[y == y_i, :][:, categorical_feature].astype(int),
-                                    minlength=max_categories[categorical_feature])
-                    self.categorical_posteriors[categorical_feature][y_i,
-                                                                    :] = dist/np.sum(dist)
+                                    minlength=max_categories[i])
+                    
+                    self.categorical_posteriors[i][y_i,:] = dist/np.sum(dist)
 
         self._is_fitted = True
         print("Model fitted")
@@ -213,7 +213,9 @@ class MixedNB():
                     for i, categorical_posterior in enumerate(self.categorical_posteriors)]
 
             r = np.concatenate([probas], axis=0)
-            r = np.squeeze(r)
+            print(r.shape)
+            r = np.squeeze(r, axis=-1)
+            print(r.shape)
             r = np.moveaxis(r, [0,1,2], [2,0,1])
 
             # (num_samples, num_classes)
@@ -225,6 +227,8 @@ class MixedNB():
             finals = t * self.prior
         elif self.categorical_features.size != 0:
             finals = p * self.prior + self.alpha
+        
+#         print(f"Sum: {np.sum(finals.T, axis=1)}")
 
         normalised = finals.T/np.sum(finals, axis=1)
         normalised = np.moveaxis(normalised, [0,1], [1,0])
