@@ -66,7 +66,7 @@ class MixedNB():
     >>> print(clf.predict([[0, 0]]))
     """
 
-    def __init__(self, alpha=0.5, priors=None, var_smoothing=1e-9):
+    def __init__(self, alpha=0.5, priors=None, var_smoothing=1e-8):
         self.alpha = alpha
         self.var_smoothing = var_smoothing
         self.num_features = 0
@@ -113,7 +113,8 @@ class MixedNB():
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        self.epsilon = np.sqrt(self.var_smoothing) * np.std(X, ddof=0, axis=0).max()
+        self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
+        print(self.epsilon)
 
         # Get whatever that is needed
         y = np.array(y).astype(int)
@@ -127,7 +128,7 @@ class MixedNB():
             priors = np.asarray(self.priors)
             if len(priors) != num_classes:
                 raise ValueError('Number of priors must match number of classes.')
-            if np.isclose(priors.sum()) != 1.0:
+            if np.isclose(priors.sum(), 1.0):
                 raise ValueError("The sum of the priors should be 1.")
             if (priors < 0).any():
                 raise ValueError('Priors must be non-negative.')
@@ -145,7 +146,7 @@ class MixedNB():
         # Add 1 due to zero-indexing
         max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
         max_categories = max_categories.astype(int)
-        print(f"Max categories: {max_categories}")
+        print(max_categories)
 
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
@@ -161,8 +162,7 @@ class MixedNB():
             if self.gaussian_features.size != 0:
                 x = X[y == y_i, :][:, self.gaussian_features]
                 self.theta[y_i, :] = np.mean(x, axis=0)
-                # Bessel's correction; n-1
-                self.sigma[y_i, :] = np.std(x, ddof=1, axis=0)
+                self.sigma[y_i, :] = np.var(x, axis=0) # note: it's really sigma squared
 
             if self.categorical_features.size != 0:
                 x = X[y == y_i, :][:, self.categorical_features]
@@ -173,7 +173,6 @@ class MixedNB():
                     self.categorical_posteriors[i][y_i,:] = dist/np.sum(dist)
 
         self._is_fitted = True
-        print("Model fitted")
 
         return self
 
@@ -208,8 +207,8 @@ class MixedNB():
             # take values of x's from the samples 
             # to get its likelihood
             # (num_classes, num_samples, num_features)
-            something = 1/np.sqrt(2.*np.pi*(s**2.)) * \
-                np.exp(-((x_gaussian-mu)**2.)/(2.*(s**2.)))
+            something = 1/np.sqrt(2.*np.pi*s) * \
+                np.exp(-((x_gaussian-mu)**2.)/(2.*s))
 
             # For every y_class and sample, 
             # multiply all the features
@@ -238,13 +237,15 @@ class MixedNB():
             p = np.prod(r, axis=2).T
 
         if self.gaussian_features.size != 0 and self.categorical_features.size != 0:
-            finals = t * p *  self.priors
+            # t = t.T/np.sum(t, axis=1)
+            # p = p.T/np.sum(p, axis=1)
+            finals = t * p * self.priors
         elif self.gaussian_features.size != 0:
             finals = t * self.priors
         elif self.categorical_features.size != 0:
             finals = p * self.priors + self.alpha
 
-        normalised = finals.T/np.sum(finals, axis=1)
+        normalised = finals.T/(np.sum(finals, axis=1) + 1e-6)
         normalised = np.moveaxis(normalised, [0,1], [1,0])
 
         return normalised
