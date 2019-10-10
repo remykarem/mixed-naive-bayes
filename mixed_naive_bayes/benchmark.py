@@ -50,5 +50,7 @@ y = dataset['target']
 gaussian_nb = GaussianNB()
 mixed_nb = MixedNB()
 
-gaussian_nb.fit(X,y)
+# gaussian_nb.fit(X,y)
 mixed_nb.fit(X,y)
+
+print(mixed_nb.score(X,y))
