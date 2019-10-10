@@ -19,8 +19,10 @@ class MixedNB():
     """
     Naive Bayes classifier for Categorical and Gaussian models.
 
-    Note: MixedNB expects that for each feature, all possible classes
-    are in the dataset or encoded.
+    Note: When using categorical_features, MixedNB expects that
+    for each feature, all possible classes are captured in the
+    trining data X in the `mixed_naive_bayes.MixedNB.fit` method.
+    This is to ensure numerical stability.
 
     Parameters
     ----------
@@ -66,7 +68,7 @@ class MixedNB():
     >>> print(clf.predict([[0, 0]]))
     """
 
-    def __init__(self, alpha=0.5, priors=None, var_smoothing=1e-8):
+    def __init__(self, alpha=0.5, priors=None, var_smoothing=1e-9):
         self.alpha = alpha
         self.var_smoothing = var_smoothing
         self.num_features = 0
@@ -79,6 +81,8 @@ class MixedNB():
         self.theta = []
         self.sigma = []
         self.categorical_posteriors = []
+        # print(priors)
+        # print(self.priors)
         
 
     def fit(self, X, y, categorical_features=None):
@@ -105,7 +109,7 @@ class MixedNB():
         self.categorical_features = categorical_features
         # Validate inputs
         self.alpha = _validate_inits(self.alpha)
-        _validate_training_data(
+        X, y = _validate_training_data(
             X, y, self.categorical_features)
 
         # From https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/naive_bayes.py#L344
@@ -114,25 +118,24 @@ class MixedNB():
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
         self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
-        print(self.epsilon)
 
         # Get whatever that is needed
-        y = np.array(y).astype(int)
-        num_classes = np.unique(y).size
-        num_samples, self.num_features = X.shape
+        uniques = np.unique(y)
+        num_classes = uniques.size
+        (num_samples, self.num_features) = X.shape
         
+        # print(self.priors)
         # Correct the inputs
         if self.priors is None:
             self.priors = np.bincount(y)/num_samples
         else:
-            priors = np.asarray(self.priors)
-            if len(priors) != num_classes:
+            self.priors = np.asarray(self.priors)
+            if len(self.priors) != num_classes:
                 raise ValueError('Number of priors must match number of classes.')
-            if np.isclose(priors.sum(), 1.0):
-                raise ValueError("The sum of the priors should be 1.")
-            if (priors < 0).any():
+            if np.isclose(self.priors.sum(), 1.0):
+                raise ValueError("The sum of priors should be 1.")
+            if (self.priors < 0).any():
                 raise ValueError('Priors must be non-negative.')
-            self.priors = priors
 
         if self.categorical_features is None:
             self.categorical_features = []
@@ -146,7 +149,6 @@ class MixedNB():
         # Add 1 due to zero-indexing
         max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
         max_categories = max_categories.astype(int)
-        print(max_categories)
 
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
@@ -157,14 +159,16 @@ class MixedNB():
                 np.zeros((num_classes, num_categories))
                 for num_categories in max_categories]
 
-        for y_i in np.unique(y):
+        for y_i in uniques:
 
             if self.gaussian_features.size != 0:
+                # TODO optimisation: Below is a copy. Can consider masking.
                 x = X[y == y_i, :][:, self.gaussian_features]
                 self.theta[y_i, :] = np.mean(x, axis=0)
                 self.sigma[y_i, :] = np.var(x, axis=0) # note: it's really sigma squared
 
             if self.categorical_features.size != 0:
+                # TODO optimisation: Below is a copy. Can consider masking.
                 x = X[y == y_i, :][:, self.categorical_features]
                 for i, categorical_feature in enumerate(self.categorical_features):
                     dist = np.bincount(X[y == y_i, :][:, categorical_feature].astype(int),
@@ -198,6 +202,7 @@ class MixedNB():
         X_test = np.array(X_test)
 
         if self.gaussian_features.size != 0:
+            # TODO optimisation: Below is a copy. Can consider masking
             x_gaussian = X_test[:, self.gaussian_features]
             mu = self.theta[:, np.newaxis]
             s = self.sigma[:, np.newaxis]
@@ -207,7 +212,7 @@ class MixedNB():
             # take values of x's from the samples 
             # to get its likelihood
             # (num_classes, num_samples, num_features)
-            something = 1/np.sqrt(2.*np.pi*s) * \
+            something = 1./np.sqrt(2.*np.pi*s) * \
                 np.exp(-((x_gaussian-mu)**2.)/(2.*s))
 
             # For every y_class and sample, 
@@ -354,7 +359,7 @@ def _validate_training_data(X_raw, y_raw, categorical_features):
     """
     ACCEPTABLE_TYPES = ['float64', 'int64', 'float32', 'int32']
     X = np.array(X_raw)
-    y = np.array(y_raw)
+    y = np.array(y_raw).astype(int)
 
     if X.ndim is not 2:
         raise ValueError("Bad input shape of X. " +
@@ -378,6 +383,8 @@ def _validate_training_data(X_raw, y_raw, categorical_features):
         raise ValueError("Expected X to contain only numerics, " +
                          f"but got type {y.dtype} instead. For categorical variables, " +
                          "Encode your data using sklearn's LabelEncoder.")
+
+    return X, y
 
 #     if categorical_features is not None:
 #         for feature_no in categorical_features:
