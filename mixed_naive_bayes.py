@@ -81,8 +81,6 @@ class MixedNB():
         self.theta = []
         self.sigma = []
         self.categorical_posteriors = []
-        # print(priors)
-        # print(self.priors)
         
 
     def fit(self, X, y, categorical_features=None):
@@ -159,21 +157,18 @@ class MixedNB():
                 np.zeros((num_classes, num_categories))
                 for num_categories in max_categories]
 
+        # TODO optimise below!
         for y_i in uniques:
 
             if self.gaussian_features.size != 0:
-                # TODO optimisation: Below is a copy. Can consider masking.
-                x = X[y == y_i, :][:, self.gaussian_features]
+                x = X[y==y_i, :][:, self.gaussian_features]
                 self.theta[y_i, :] = np.mean(x, axis=0)
                 self.sigma[y_i, :] = np.var(x, axis=0) # note: it's really sigma squared
 
             if self.categorical_features.size != 0:
-                # TODO optimisation: Below is a copy. Can consider masking.
-                x = X[y == y_i, :][:, self.categorical_features]
                 for i, categorical_feature in enumerate(self.categorical_features):
                     dist = np.bincount(X[y == y_i, :][:, categorical_feature].astype(int),
                                     minlength=max_categories[i])
-                    
                     self.categorical_posteriors[i][y_i,:] = dist/np.sum(dist)
 
         self._is_fitted = True
