@@ -81,6 +81,11 @@ class MixedNB():
         self.theta = []
         self.sigma = []
         self.categorical_posteriors = []
+
+
+    def __repr__(self):        
+        return str(f"{self.__class__.__name__}(alpha={self.alpha}, " + 
+            f"priors={self.priors}, var_smoothing={self.var_smoothing})")
         
 
     def fit(self, X, y, categorical_features=None):
