@@ -3,7 +3,8 @@ from sklearn.datasets import load_iris, load_digits, load_wine, \
 from sklearn.naive_bayes import GaussianNB
 from mixed_naive_bayes import MixedNB, load_example
 
-for load_data in [load_iris, load_digits, load_wine, load_breast_cancer]:
+for load_data in [load_iris, load_digits, load_wine, 
+    load_breast_cancer]:
 
     dataset = load_data()
 
@@ -41,7 +42,7 @@ print(mixed_nb.score(X[:1400],y[:1400]))
 
 print("--------------------------------------")
 
-dataset = load_digits()
+dataset = fetch_california_housing()
 
 X = dataset['data']
 y = dataset['target']
