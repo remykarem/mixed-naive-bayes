@@ -27,9 +27,16 @@ clf.score(X,y)
 
 ## Tests
 
+Unit testing:
 
 ```bash
 pytest tests.py
+```
+
+Run benchmarks against `sklearn`'s APIs:
+
+```bash
+python benchmarks.py
 ```
 
 ## API Documentation
@@ -42,7 +49,9 @@ Comparing performance with `sklearn`:
 
 ## To-Dos
 
-- [ ] Regulariser for categorical distribution
+- [ ] Refitting
+- [ ] Regulariser for mixed distribution with categorical distribution
+- [X] Regulariser for categorical distribution
 - [X] Variance smoothing for Gaussian distribution
 - [X] Vectorised main operations using NumPy
 
