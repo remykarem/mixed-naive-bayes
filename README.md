@@ -12,7 +12,7 @@ distributions.
 ## Installation
 
 ```bash
-git clone https://github.com/remykarem/MixedNaiveBayes.git
+pip install git+https://github.com/remykarem/MixedNaiveBayes#egg=mixed_naive_bayes
 ```
 
 ## Usage
