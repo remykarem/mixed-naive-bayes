@@ -77,10 +77,10 @@ class MixedNB():
         self._is_fitted = False
         self.max_categories = max_categories
         self.categorical_features = categorical_features
+        self.initial_priors = priors
 
         self.gaussian_features = []
-        self.categorical_features = []
-        self.priors = priors
+        self.priors = self.initial_priors
         self.theta = []
         self.sigma = []
         self.categorical_posteriors = []
@@ -112,6 +112,13 @@ class MixedNB():
         -------
         self : object
         """
+        if self._is_fitted:
+            self.gaussian_features = []
+            self.priors = self.initial_priors
+            self.theta = []
+            self.sigma = []
+            self.categorical_posteriors = []
+
         # Validate inputs
         self.alpha = _validate_inits(self.alpha)
         X, y = _validate_training_data(
@@ -157,7 +164,6 @@ class MixedNB():
             self.max_categories = self.max_categories.astype(int)
         else:
             self.max_categories = np.array(self.max_categories).astype(int)
-
 
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
