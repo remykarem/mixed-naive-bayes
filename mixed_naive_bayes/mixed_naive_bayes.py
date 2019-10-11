@@ -272,7 +272,7 @@ class MixedNB():
         probs = self.predict_proba(X, verbose)
         return np.argmax(probs, axis=1)
 
-    def get_params(self):
+    def get_params(self, deep=False):
         """Get parameters for this model.
 
         Returns
