@@ -1,7 +1,6 @@
 # Mixed Naive Bayes (WIP)
 
-Implementation of naive bayes for categorical and gaussian 
-distributions.
+Implementation of naive bayes for categorical and gaussian distributions.
 
 - [Installation](#installation)
 - [Usage](#usage)
@@ -28,16 +27,19 @@ clf.score(X,y)
 
 ## Performance
 
-Accuracy on the training set.
+Measures the accuracy of (1) using categorical data and (2) my Gaussian implementation.
 
 Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (G+C) |
 ------- | ---------- | ----------- | ----------- | ------------- |
 Iris    | 0.960      | 0.960       | -           | - |
 Digits  | 0.858      | 0.858       | **0.961**   | - |
-Wine    | 0.989      | 0.989       | -         | - |
-Cancer  | 0.942      | 0.942       | -         | - |
-covtype | 0.616      | 0.616       |            | **0.657** |
+Wine    | 0.989      | 0.989       | -           | - |
+Cancer  | 0.942      | 0.942       | -           | - |
+covtype | 0.616      | 0.616       |             | **0.657** |
 
+G - Gaussian only
+C - categorical only
+G+C - Gaussian and categorical
 
 ## Tests
 
