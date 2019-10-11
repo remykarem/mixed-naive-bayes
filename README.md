@@ -17,12 +17,31 @@ pip install git+https://github.com/remykarem/MixedNaiveBayes#egg=mixed_naive_bay
 
 ## Usage
 
+### Categorical and Gaussian
+
 ```python
 from mixed_naive_bayes import MixedNB
 clf = MixedNB()
 clf.fit(X,y)
 clf.predict(X)
-clf.score(X,y)
+```
+
+### Categorical only
+
+```python
+from mixed_naive_bayes import MixedNB
+clf = MixedNB()
+clf.fit(X,y)
+clf.predict(X)
+```
+
+### Gaussian only
+
+```python
+from mixed_naive_bayes import MixedNB
+clf = MixedNB()
+clf.fit(X,y)
+clf.predict(X)
 ```
 
 ## Performance
@@ -48,6 +67,17 @@ Unit testing:
 ```bash
 pytest tests.py
 ```
+
+## Performance
+
+Accuracy on the training set.
+
+Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (G+C) |
+------- | ---------- | ----------- | ----------- | ------------- |
+Iris    | 0.960      | 0.960       | -           | - |
+Digits  | 0.858      | 0.858       | 290         | 286 |
+Wine    | 0.989      | 0.989       | 290         | 286 |
+Cancer  | 0.942      | 0.942       | 290         | 286 |
 
 Run benchmarks against `sklearn`'s APIs:
 
