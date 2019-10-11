@@ -88,7 +88,7 @@ class MixedNB():
             f"var_smoothing={self.var_smoothing})")
         
 
-    def fit(self, X, y, categorical_features=None):
+    def fit(self, X, y, categorical_features=None, categories=None):
         """Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -120,7 +120,7 @@ class MixedNB():
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        self.epsilon = self.var_smoothing * np.var(X, axis=0).max()
+        self.epsilon = self.var_smoothing * np.var(X, ddof=1, axis=0).max()
 
         # Get whatever that is needed
         uniques = np.unique(y)
@@ -150,8 +150,12 @@ class MixedNB():
 
         # How many categories are there in each categorical_feature
         # Add 1 due to zero-indexing
-        max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
-        max_categories = max_categories.astype(int)
+        if categories is None:
+            max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
+            max_categories = max_categories.astype(int)
+        else:
+            max_categories = np.array(categories).astype(int)
+
 
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
@@ -173,7 +177,7 @@ class MixedNB():
             if self.categorical_features.size != 0:
                 for i, categorical_feature in enumerate(self.categorical_features):
                     dist = np.bincount(X[y == y_i, :][:, categorical_feature].astype(int),
-                                    minlength=max_categories[i])
+                                    minlength=max_categories[i]) + self.alpha
                     self.categorical_posteriors[i][y_i,:] = dist/np.sum(dist)
 
         self._is_fitted = True
@@ -230,25 +234,22 @@ class MixedNB():
             # Each item in the list contains the distributions for the y_classes
             # Shape of each item is (num_classes,1,num_samples)
             probas = [categorical_posterior[:, X[:, i][:,np.newaxis]]
-                    for i, categorical_posterior in enumerate(self.categorical_posteriors)]
+                    for i, categorical_posterior 
+                    in enumerate(self.categorical_posteriors)]
 
             r = np.concatenate([probas], axis=0)
-            # print(r.shape)
             r = np.squeeze(r, axis=-1)
-            # print(r.shape)
             r = np.moveaxis(r, [0,1,2], [2,0,1])
 
             # (num_samples, num_classes)
             p = np.prod(r, axis=2).T
 
         if self.gaussian_features.size != 0 and self.categorical_features.size != 0:
-            # t = t.T/np.sum(t, axis=1)
-            # p = p.T/np.sum(p, axis=1)
             finals = t * p * self.priors
         elif self.gaussian_features.size != 0:
             finals = t * self.priors
         elif self.categorical_features.size != 0:
-            finals = p * self.priors + self.alpha
+            finals = p * self.priors
 
         normalised = finals.T/(np.sum(finals, axis=1) + 1e-6)
         normalised = np.moveaxis(normalised, [0,1], [1,0])
@@ -359,7 +360,7 @@ def _validate_training_data(X_raw, y_raw, categorical_features):
     """
     ACCEPTABLE_TYPES = ['float64', 'int64', 'float32', 'int32']
     X = np.array(X_raw)
-    y = np.array(y_raw).astype(int)
+    y = np.squeeze(np.array(y_raw).astype(int))
 
     if X.ndim is not 2:
         raise ValueError("Bad input shape of X. " +
@@ -367,7 +368,7 @@ def _validate_training_data(X_raw, y_raw, categorical_features):
                          "Reshape your data accordingly.")
     if y.ndim is not 1:
         raise ValueError("Bad input shape of y. " +
-                         f"Expected 1D array, but got {y.ndim}D instead. " +
+                         f"Expected 1D/2D array, but got {y.ndim}D instead. " +
                          "Reshape your data accordingly.")
 
     if X.shape[0] != y.shape[0]:

@@ -65,8 +65,7 @@ def test_continuous_data_wine():
     print(gaussian_nb.score(X,y))
     print(mixed_nb.score(X,y))
     
-    assert np.abs(mixed_nb_score-gaussian_nb_score) < 0.01
-    
+    assert np.isclose(gaussian_nb_score,mixed_nb_score)
     
 def test_continuous_data_digits():
     digits = load_digits()
@@ -84,7 +83,7 @@ def test_continuous_data_digits():
     print(gaussian_nb.score(X,y))
     print(mixed_nb.score(X,y))
     
-    assert np.abs(mixed_nb_score-gaussian_nb_score) < 0.01
+    assert np.isclose(gaussian_nb_score,mixed_nb_score)
     
 def test_continuous_data_breast_cancer():
     breast_cancer = load_breast_cancer()
@@ -102,7 +101,7 @@ def test_continuous_data_breast_cancer():
     print(gaussian_nb_score)
     print(mixed_nb_score)
     
-    assert np.abs(mixed_nb_score-gaussian_nb_score) < 0.01
+    assert np.isclose(gaussian_nb_score,mixed_nb_score)
 
     
 def test_categorical_data_digits():
@@ -117,6 +116,9 @@ def test_categorical_data_digits():
     mixed_nb = MixedNB()
     mixed_nb.fit(X[:1440],y[:1440],list(range(64)))
     mixed_nb_score = mixed_nb.score(X[:1440],y[:1440])
+
+    print(gaussian_nb_score)
+    print(mixed_nb_score)
     
     
 def test_categorical_data_simple():

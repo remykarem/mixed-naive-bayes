@@ -50,7 +50,6 @@ Comparing performance with `sklearn`:
 ## To-Dos
 
 - [ ] Refitting
-- [ ] Regulariser for mixed distribution with categorical distribution
 - [X] Regulariser for categorical distribution
 - [X] Variance smoothing for Gaussian distribution
 - [X] Vectorised main operations using NumPy
