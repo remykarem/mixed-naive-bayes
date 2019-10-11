@@ -68,12 +68,15 @@ class MixedNB():
     >>> print(clf.predict([[0, 0]]))
     """
 
-    def __init__(self, alpha=0.5, priors=None, var_smoothing=1e-9):
+    def __init__(self, categorical_features=None, max_categories=None, 
+                 alpha=0.5, priors=None, var_smoothing=1e-9):
         self.alpha = alpha
         self.var_smoothing = var_smoothing
         self.num_features = 0
         self.epsilon = 1e-9
         self._is_fitted = False
+        self.max_categories = max_categories
+        self.categorical_features = categorical_features
 
         self.gaussian_features = []
         self.categorical_features = []
@@ -88,7 +91,7 @@ class MixedNB():
             f"var_smoothing={self.var_smoothing})")
         
 
-    def fit(self, X, y, categorical_features=None, categories=None):
+    def fit(self, X, y):
         """Fit Mixed Naive Bayes according to X, y
 
         This method also prepares a `self.models` object. Note that the reason
@@ -109,7 +112,6 @@ class MixedNB():
         -------
         self : object
         """
-        self.categorical_features = categorical_features
         # Validate inputs
         self.alpha = _validate_inits(self.alpha)
         X, y = _validate_training_data(
@@ -150,11 +152,11 @@ class MixedNB():
 
         # How many categories are there in each categorical_feature
         # Add 1 due to zero-indexing
-        if categories is None:
-            max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
-            max_categories = max_categories.astype(int)
+        if self.max_categories is None:
+            self.max_categories = np.max(X[:, self.categorical_features], axis=0) + 1
+            self.max_categories = self.max_categories.astype(int)
         else:
-            max_categories = np.array(categories).astype(int)
+            self.max_categories = np.array(self.max_categories).astype(int)
 
 
         # Prepare empty arrays
@@ -164,7 +166,7 @@ class MixedNB():
         if self.categorical_features.size != 0:
             self.categorical_posteriors = [
                 np.zeros((num_classes, num_categories))
-                for num_categories in max_categories]
+                for num_categories in self.max_categories]
 
         # TODO optimise below!
         for y_i in uniques:
@@ -177,7 +179,7 @@ class MixedNB():
             if self.categorical_features.size != 0:
                 for i, categorical_feature in enumerate(self.categorical_features):
                     dist = np.bincount(X[y == y_i, :][:, categorical_feature].astype(int),
-                                    minlength=max_categories[i]) + self.alpha
+                                    minlength=self.max_categories[i]) + self.alpha
                     self.categorical_posteriors[i][y_i,:] = dist/np.sum(dist)
 
         self._is_fitted = True
@@ -281,6 +283,8 @@ class MixedNB():
             Parameter names mapped to their values.
         """
         return {
+            'categorical_features': self.categorical_features,
+            'max_categories': self.max_categories,
             'alpha': self.alpha,
             'priors': self.priors,
             'var_smoothing': self.var_smoothing

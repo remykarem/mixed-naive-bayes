@@ -43,9 +43,9 @@ mixed_nb.fit(X[:1400],y[:1400])
 # gaussian_nb_pred = gaussian_nb.predict(X)
 print(mixed_nb.score(X[1400:],y[1400:]))
 
-mixed_nb = MixedNB()
+mixed_nb = MixedNB(list(range(64)),np.max(X,axis=0)+1)
 # mixed_nb.fit(X[:1400],y[:1400],[0,1,9,17,24,25,32,33,40,41,48,49,57],np.max(X[:,[0,1,9,17,24,25,32,33,40,41,48,49,57]], axis=0)+1)
-mixed_nb.fit(X[:1400],y[:1400],list(range(64)),np.max(X,axis=0)+1)
+mixed_nb.fit(X[:1400],y[:1400])
 # mixed_nb_pred = mixed_nb.predict(X)
 
 print(mixed_nb.score(X[1400:],y[1400:]))
@@ -60,9 +60,9 @@ gaussian_nb = GaussianNB()
 gaussian_nb.fit(X,y)
 # gaussian_nb_pred = gaussian_nb.predict(X)
 
-mixed_nb = MixedNB()
+mixed_nb = MixedNB(list(range(64)),np.repeat(17,64))
 # mixed_nb.fit(X,y,[0,1,9,17,24,25,32,33,40,41,48,49,57])
-mixed_nb.fit(X,y,list(range(64)),np.repeat(17,64))
+mixed_nb.fit(X,y)
 # mixed_nb_pred = mixed_nb.predict(X)
 
 print(gaussian_nb.score(X,y))

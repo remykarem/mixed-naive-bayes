@@ -5,12 +5,12 @@ from mixed_naive_bayes import MixedNB
 
 
 data = load_iris()
-X = data.data
-y = data.target
+X = data['data']
+y = data['target']
 print(len(X))
 
 # clf = GaussianNB()
 clf = MixedNB()
-clf.fit(X,y, [])
+clf.fit(X,y)
 print(clf.score(X,y))
 

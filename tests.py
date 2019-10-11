@@ -23,14 +23,14 @@ def test_input_param():
         clf.fit([0,1,2], [0,1,0])
 
 def test_input_string():
-    clf = MixedNB()
+    clf = MixedNB([0])
     with pytest.raises(ValueError):
-        clf.fit([['X'],['y']], [0,1], [0])
+        clf.fit([['X'],['y']], [0,1])
 
 def test_input_wrong_shape():
-    clf = MixedNB()
+    clf = MixedNB([0])
     with pytest.raises(ValueError):
-        clf.fit([0,1,2], [0,1], [0])
+        clf.fit([0,1,2], [0,1])
 
 def test_continuous_data_iris():
     iris = load_iris()
@@ -113,8 +113,8 @@ def test_categorical_data_digits():
     gaussian_nb.fit(X,y)
     gaussian_nb_score = gaussian_nb.score(X,y)
 
-    mixed_nb = MixedNB()
-    mixed_nb.fit(X[:1440],y[:1440],list(range(64)))
+    mixed_nb = MixedNB(list(range(64)))
+    mixed_nb.fit(X[:1440],y[:1440])
     mixed_nb_score = mixed_nb.score(X[:1440],y[:1440])
 
     print(gaussian_nb_score)
@@ -124,8 +124,8 @@ def test_categorical_data_digits():
 def test_categorical_data_simple():
     X, y = load_example()
     
-    mixed_nb = MixedNB()
-    mixed_nb.fit(X,y,[0,1])
+    mixed_nb = MixedNB([0,1])
+    mixed_nb.fit(X,y)
     mixed_nb_score = mixed_nb.score(X,y)
     
     print(mixed_nb_score)
