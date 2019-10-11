@@ -11,7 +11,7 @@ setuptools.setup(
     description="Categorical and Gaussian Naive Bayes",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/remykarem/MixedNaiveBayes",
+    url="https://github.com/remykarem/mixed-naive-bayes",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -19,5 +19,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=['numpy']
+    install_requires=['numpy>=1.16.1']
 )

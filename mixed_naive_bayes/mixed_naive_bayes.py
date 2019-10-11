@@ -7,7 +7,7 @@ applying Bayes' theorem with strong (naive) feature independence assumptions.
 
 The API's design is similar to scikit-learn's.
 
-Look at the example in `mixed_naive_bayes.MixedNB`.
+Look at the example in `mixed_naive_bayes.mixed_naive_bayes.MixedNB`.
 """
 
 import warnings
@@ -21,7 +21,7 @@ class MixedNB():
 
     Note: When using categorical_features, MixedNB expects that
     for each feature, all possible classes are captured in the
-    trining data X in the `mixed_naive_bayes.MixedNB.fit` method.
+    trining data X in the `mixed_naive_bayes.mixed_naive_bayes.MixedNB.fit` method.
     This is to ensure numerical stability.
 
     Parameters
@@ -44,8 +44,6 @@ class MixedNB():
         absolute additive value to variances
     num_samples : int
         number of training samples
-    num_features : int
-        number of features of X
     num_classes : int
         number of classes (number of layes of y)
     models : array, shape (num_classes,)
@@ -408,13 +406,6 @@ def _validate_training_data(X_raw, y_raw, categorical_features):
 
 def load_example():
     """Load an example dataset"""
-    # Assume all data flushed to 0
-    X0 = [[0, 0], [1, 1], [1, 0], [0, 1], [1, 1],
-          [2, 1], [0, 2], [2, 2], [1, 1], [0, 2]]
-    X1 = [[180, 75], [165, 61], [167, 62],
-          [178, 63], [174, 69], [166, 60],
-          [167, 59], [165, 60], [173, 68],
-          [178, 71]]
     X = [[0, 0, 180, 75],
          [1, 1, 165, 61],
          [1, 0, 167, 62],
@@ -426,10 +417,5 @@ def load_example():
          [1, 1, 173, 68],
          [0, 2, 178, 71]]
     y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
-    # X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
-    #      [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
-    # y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
-    X = np.array(X)
-    y = np.array(y)
 
     return X, y
