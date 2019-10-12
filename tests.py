@@ -22,20 +22,34 @@ def test_input_param():
     with pytest.raises(TypeError):
         clf.fit([0,1,2], [0,1,0])
 
-def test_input_string():
-    clf = MixedNB([0])
+def test_input_string_x():
+    clf = MixedNB()
     with pytest.raises(ValueError):
         clf.fit([['X'],['y']], [0,1])
 
-def test_input_wrong_shape():
-    clf = MixedNB([0])
+def test_input_string_y():
+    clf = MixedNB()
     with pytest.raises(ValueError):
-        clf.fit([0,1,2], [0,1])
+        clf.fit([[2],[1]], [0,'1'])
 
-def test_input_not_encoded():
-    clf = MixedNB(categorical_features='all')
+def test_input_wrong_dims():
+    clf = MixedNB()
     with pytest.raises(ValueError):
-        clf.fit([[1,2],[2,2],[3,3]], [0,1,0])
+        clf.fit([[0,1,2]], [0,1])
+
+def test_input_wrong_dims():
+    clf = MixedNB()
+    with pytest.raises(ValueError):
+        clf.fit([[0,1,2]], [[0,1]])
+
+def test_input_y_not_encoded():
+    clf = MixedNB()
+    with pytest.raises(ValueError):
+        clf.fit([[1,2],[2,2],[3,3]], [0,8,0])
+
+def test_input_x_not_encoded():
+    clf = MixedNB()
+    pass
 
 def test_continuous_data_iris():
     iris = load_iris()

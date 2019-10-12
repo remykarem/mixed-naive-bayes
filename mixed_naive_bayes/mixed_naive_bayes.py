@@ -145,7 +145,6 @@ class MixedNB():
         num_classes = uniques.size
         (num_samples, self.num_features) = X.shape
 
-        # print(self.priors)
         # Correct the inputs
         if self.priors is None:
             self.priors = np.bincount(y)/num_samples
@@ -178,8 +177,6 @@ class MixedNB():
             self.max_categories = self.max_categories.astype(int)
         else:
             self.max_categories = np.array(self.max_categories).astype(int)
-
-        print(self.max_categories)
 
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
@@ -415,30 +412,35 @@ def _validate_training_data(X_raw, y_raw, categorical_features, max_categories):
 
     y_classes = np.unique(y)
     if y_classes.size is 1:
-        raise ValueError("Found only 1 class in y. There's nothing to classify here!")
+        raise ValueError(
+            "Found only 1 class in y. There's nothing to classify here!")
 
     if not np.array_equal(y_classes, np.arange(0, y_classes.size)):
         raise ValueError(f"Expected y to have classes {np.arange(0, y_classes.size)} " +
-                            f"but got {y_classes} instead. " +
-                            "Encode your data using sklearn's LabelEncoder.")
+                         f"but got {y_classes} instead. " +
+                         "Encode your data using sklearn's LabelEncoder.")
 
-    if categorical_features is not None and max_categories is None:
+    if categorical_features is not None:
         if categorical_features is 'all':
             categorical_features = np.arange(0, X.shape[1])
         for feature_no in categorical_features:
-            uniques = np.unique(X[:, feature_no]).astype(int)
-            if not np.array_equal(uniques, np.arange(0, np.max(uniques)+1)):
-                raise ValueError(f"Expected feature no. {feature_no} to have " +
-                                 f"{np.arange(0,np.max(uniques)+1)} " +
-                                 f"unique values, but got {uniques} instead. " +
-                                 "Encode your data using sklearn's LabelEncoder.")
+            if not np.array_equal(X[:, feature_no], X[:, feature_no].astype(int)):
+                warnings.warn(f"Feature no. {feature_no} is continuous data. " +
+                              "Casting data to integer.")
+            if max_categories is not None:
+                uniques = np.unique(X[:, feature_no]).astype(int)
+                if not np.array_equal(uniques, np.arange(0, np.max(uniques)+1)):
+                    raise ValueError(f"Expected feature no. {feature_no} to have " +
+                                     f"{np.arange(0,np.max(uniques)+1)} " +
+                                     f"unique values, but got {uniques} instead. " +
+                                     "Encode your data using sklearn's LabelEncoder.")
 
     return X, y
 
 
 def load_example():
     """Load an example dataset"""
-    X = [[0, 0, 180, 75],
+    X = [[0, 0, 180.1, 75],
          [1, 1, 165, 61],
          [1, 0, 167, 62],
          [0, 1, 178, 63],
