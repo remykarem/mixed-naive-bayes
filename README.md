@@ -6,7 +6,7 @@ This module implements **Categorical** (Multinoulli) and **Gaussian** naive Baye
 
 The motivation for writing this library is that [scikit-learn](https://scikit-learn.org/) does not have an implementation for mixed type of naive bayes. They have one for `CategoricalNB` [here](https://github.com/scikit-learn/scikit-learn/blob/86aea9915/sklearn/naive_bayes.py#L1021) but it's still pending.
 
-I like `scikit-learn`'s APIs (`.fit()`, `.predict()` 😍) so if you use it a lot, you'll find that it's easy to get started started with this library.
+I like `scikit-learn`'s APIs  😍 so if you use it a lot, you'll find that it's easy to get started started with this library (there's `.fit()`, `.predict()`, `.predict_proba()` and `.score()`).
 
 I've written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for naive bayes if you need to understand a bit more on the math.
 
@@ -22,6 +22,7 @@ I've written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for
 - [To-Dos](#to-dos)
 - [References](#references)
 - [Related work](#related-work)
+- [Contributing ️❤️](#contributing)
 
 ## Installation
 
@@ -33,7 +34,7 @@ pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed_naive_b
 
 ## Quick start
 
-### Example: Discrete and continuous data
+### Example 1: Discrete and continuous data
 
 Below is an example of a dataset with discrete (first 2 columns) and continuous data (last 2). Specify the indices of the features which are to follow the categorical distribution (columns `0` and `1`). Then fit and
 predict as per usual.
@@ -51,9 +52,42 @@ clf.fit(X,y)
 clf.predict(X)
 ```
 
-**NOTE: The module expects that you treat the categorical data be label encoded accordingly.**
+**NOTE: The module expects that you treat the categorical data be label encoded accordingly. See the following example to see how.**
 
-### Example: Categorical only
+### Example 2: Discrete and continuous data
+
+Below is an example of a dataset with discrete (first 2 columns) and continuous data (last 2). Specify the indices of the features which are to follow the categorical distribution (columns `0` and `1`). Then fit and
+predict as per usual.
+
+If we decide to make the 3rd column as a discrete feature, we can use sklearn's [`LabelEncoder()`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html) preprocessing module.
+
+```python
+from sklearn.preprocessing import LabelEncoder
+X = [[0, 0, 180, 75],
+     [1, 1, 165, 61],
+     [2, 1, 166, 60],
+     [1, 1, 173, 68],
+     [0, 2, 178, 71]]
+y = [0, 0, 1, 1, 0]
+X = np.array(X)
+y = np.array(y)
+label_encoder = LabelEncoder()
+X[:,2] = label_encoder.fit_transform(X[:,2])
+# array([[ 0,  0,  4, 75],
+#        [ 1,  1,  0, 61],
+#        [ 2,  1,  1, 60],
+#        [ 1,  1,  2, 68],
+#        [ 0,  2,  3, 71]])
+```
+
+```python
+from mixed_naive_bayes import MixedNB
+clf = MixedNB(categorical_features=[0,1])
+clf.fit(X,y)
+clf.predict(X)
+```
+
+### Example 3: Discrete data only
 
 If all columns are to be treated as discrete, specify `categorical_features='all'`.
 
@@ -70,9 +104,9 @@ clf.fit(X,y)
 clf.predict(X)
 ```
 
-**NOTE: The module expects that you treat the categorical data be label encoded accordingly.**
+**NOTE: The module expects that you treat the categorical data be label encoded accordingly. See the previous example to see how.**
 
-### Gaussian only
+### Example 4: Continuous data only
 
 If all columns are to be treated as continuous, then leave the constructor blank.
 
@@ -116,7 +150,7 @@ G+C - Gaussian and categorical
 
 ## Performance (Speed)
 
-The library is written in [NumPy](https://numpy.org/), so many operations are vectorised and faster than their for-loop counterparts.
+The library is written in [NumPy](https://numpy.org/), so many operations are vectorised and faster than their for-loop counterparts. Fun fact: my first prototype (with many for-loops) took me 8 times slower than sklearn's 😱.
 
 (Still measuring)
 
@@ -128,12 +162,19 @@ I'm still writing more test cases, but in the meantime, you can run the followin
 pytest tests.py
 ```
 
+Testing in the following environments:
+
+- macOS 10.14
+- Ubuntu 18.04 (Docker)
+- Ubuntu 16.04 (Docker)
+
 ## API Documentation
 
 For more information on usage of the API, visit [here](https://remykarem.github.io/docs/mixed_naive_bayes.html). This was generated using pdoc3.
 
 ## To-Dos
 
+- [ ] Implement `predict_log_proba()`
 - [ ] Write more test cases
 - [ ] Performance (Speed)
 - [X] Support refitting
@@ -153,7 +194,10 @@ Possible features:
 
 ## Related Work
 
-(Hang in there)
+- [Categorical naive Bayes by scikit-learn](https://scikit-learn.org/dev/modules/generated/sklearn.naive_bayes.CategoricalNB.html)
+- [Naive Bayes classifier for categorical and numerical data](https://github.com/wookieJ/naive-bayes)
+- [Generalised naive Bayes classifier](https://github.com/ashkonf/HybridNaiveBayes)
 
-scikit-learn's categorical naive bayes
-scikit-learn's categorical naive bayes
+## Contributing ️❤️
+
+Please submit your pull requests, will appreciate it a lot ❤

@@ -1,3 +1,4 @@
 git://github.com/remykarem/mixed-naive-bayes.git#egg=mixed_naive_bayes
 numpy==1.16.1
-sklearn
+scikit-learn==0.20.2
+pytest==5.0.1
