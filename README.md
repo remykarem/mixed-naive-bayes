@@ -1,4 +1,4 @@
-# Mixed Naive Bayes (WIP)
+# Mixed Naive Bayes
 
 Naive Bayes classifiers are a set of supervised learning algorithms based on applying Bayes' theorem, but with strong independence assumptions between the features given the value of the class variable (hence naive).
 
