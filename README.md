@@ -162,12 +162,6 @@ I'm still writing more test cases, but in the meantime, you can run the followin
 pytest tests.py
 ```
 
-Testing in the following environments:
-
-- macOS 10.14
-- Ubuntu 18.04 (Docker)
-- Ubuntu 16.04 (Docker)
-
 ## API Documentation
 
 For more information on usage of the API, visit [here](https://remykarem.github.io/docs/mixed_naive_bayes.html). This was generated using pdoc3.
