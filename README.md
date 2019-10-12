@@ -1,12 +1,14 @@
 # Mixed Naive Bayes (WIP)
 
-This module implements **Categorical** (Multinoulli) and **Gaussian** Naive Bayes algorithms. These are supervised learning methods based on applying Bayes' theorem with strong (naive) feature independence assumptions.
+Naive Bayes classifiers are a set of supervised learning algorithms based on applying Bayes' theorem, but with strong independence assumptions between the features given the value of the class variable (hence naive).
 
-The motivation for writing this library is that scikit-learn does not have an implementation for categorical naive bayes.
+This module implements **Categorical** (Multinoulli) and **Gaussian** Naive Bayes algorithms. This means that we not only assume that features (given their respective *y*'s) follow the Gaussian distribution, but also the categorical distribution. Hence it is natural that the continous data be attributed to the Gaussian and the categorical data (nominal or ordinal) be attributed the the categorical distribution.
+
+The motivation for writing this library is that scikit-learn does not have an implementation for mixed type of naive bayes. They have one for `CategoricalNB` [here](https://github.com/scikit-learn/scikit-learn/blob/86aea9915/sklearn/naive_bayes.py#L1021) but it's still pending.
 
 I like `scikit-learn`'s APIs (`.fit()`, `.predict()` 😍) so if you use it a lot, you'll find that it's easy to get started started with this library.
 
-I've written a tutorial [here](https://remykarem.github.io/blog/naive_bayes) for naive bayes if you need to understand a bit more on the math.
+I've written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for naive bayes if you need to understand a bit more on the math.
 
 ## Contents
 
@@ -33,15 +35,29 @@ pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed_naive_b
 
 ### Categorical and Gaussian
 
-Specify the indices of the features which are
-to follow the categorical distribution. In this dataset, the columns `0` and `1` in X are to be treated as categorical.
+Below is an example of a dataset with discrete and continuous data. Specify the indices of the features which are to follow the categorical distribution (columns `0` and `1`). Then fit and
+predict as per usual.
 
 ```python
 from mixed_naive_bayes import MixedNB
-clf = MixedNB([0,1])
+import numpy as np
+X = [[0, 0, 180, 75],
+     [1, 1, 165, 61],
+     [1, 0, 167, 62],
+     [0, 1, 178, 63],
+     [1, 1, 174, 69],
+     [2, 1, 166, 60],
+     [0, 2, 167, 59],
+     [2, 2, 165, 60],
+     [1, 1, 173, 68],
+     [0, 2, 178, 71]]
+y = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0]
+clf = MixedNB(categorical_features=[0,1])
 clf.fit(X,y)
 clf.predict(X)
 ```
+
+**NOTE: The module expects that you treat the categorical data be label encoded accordingly.**
 
 ### Categorical only
 
@@ -93,6 +109,8 @@ G+C - Gaussian and categorical
 
 ## Performance (Speed)
 
+The library is written in [NumPy](https://numpy.org/), so many operations are vectorised and faster than their for-loop counterparts.
+
 (Still measuring)
 
 ## Tests
@@ -129,3 +147,6 @@ Possible features:
 ## Related Work
 
 (Hang in there)
+
+scikit-learn's categorical naive bayes
+scikit-learn's categorical naive bayes

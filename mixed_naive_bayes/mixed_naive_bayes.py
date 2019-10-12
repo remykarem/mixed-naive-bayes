@@ -149,6 +149,8 @@ class MixedNB():
 
         if self.categorical_features is None:
             self.categorical_features = []
+        elif self.categorical_features is 'all':
+            self.categorical_features = np.arange(0,self.num_features+1)
 
         # Get the index columns of the discrete data and continuous data
         self.categorical_features = np.array(self.categorical_features).astype(int)
