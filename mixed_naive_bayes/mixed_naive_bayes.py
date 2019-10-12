@@ -26,11 +26,18 @@ class MixedNB():
 
     Parameters
     ----------
+    categorical_features : array-like shape (num_categorical_classes,) or 
+    'all' (default=None)
+        Columns which have categorical feature_distributions
+    max_categories : array-like, shape (num_categorical_classes,) (default=None)
+        The maximum number of categories that can be found for each 
+        categorical feature. If none specified, they will be generated
+        automatically.
     alpha : non-negative float, optional (default=0)
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
         This is for features with categorical distribution.
-    class_prior : array-like, size (num_classes,), optional (default=None)
-        Prior probabilities of the classes. If specified the priors are not
+    priors : array-like, size (num_classes,), optional (default=None)
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
     var_smoothing : float, optional (default=1e-9)
         Portion of the largest variance of all features that is added to
@@ -38,16 +45,22 @@ class MixedNB():
 
     Attributes
     ----------
-    class_prior : array, shape (num_classes,)
+    priors : array, shape (num_classes,)
         probability of each class.
     epsilon : float
         absolute additive value to variances
     num_samples : int
         number of training samples
-    num_classes : int
+    categorical_features : int
         number of classes (number of layes of y)
-    models : array, shape (num_classes,)
+    gaussian_features : array, shape (num_classes,)
         the distribution for every feature and class
+    categorical_posteriors : array
+        the distribution of the categorical features
+    theta : array
+        the mean of the gaussian features
+    sigma : array
+        the variance of the gaussian features
 
     References
     ----------
@@ -55,15 +68,16 @@ class MixedNB():
 
     Example
     -------
-    >>> import numpy as np
-    >>> X = [[1, 0], [1, 0], [0, 0], [0, 1], [1, 1], [1, 1],
-             [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 0]]
-    >>> y = [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
-    >>> X = np.array(X)
-    >>> y = np.array(y)
-    >>> clf = MixedNB()
-    >>> clf.fit(X, y, categorical_features=[0, 1])
-    >>> print(clf.predict([[0, 0]]))
+    >>> from mixed_naive_bayes import MixedNB
+    >>> X = [[0, 0, 180, 75],
+             [1, 1, 165, 61],
+             [2, 1, 166, 60],
+             [1, 1, 173, 68],
+             [0, 2, 178, 71]]
+    >>> y = [0, 0, 1, 1, 0]
+    >>> clf = MixedNB(categorical_features=[0,1])
+    >>> clf.fit(X,y)
+    >>> clf.predict(X)
     """
 
     def __init__(self, categorical_features=None, max_categories=None, 
@@ -103,8 +117,6 @@ class MixedNB():
             and n_features is the number of features.
         y : array-like, shape (num_samples,)
             Target values.
-        categorical_features : array
-            Columns which have categorical feature_distributions
 
         Returns
         -------
@@ -192,7 +204,7 @@ class MixedNB():
 
         return self
 
-    def predict_proba(self, X_test, verbose=False):
+    def predict_proba(self, X_test):
         """
         Return probability estimates for the test vector X_test.
 
@@ -217,8 +229,7 @@ class MixedNB():
             # TODO optimisation: Below is a copy. Can consider masking
             x_gaussian = X_test[:, self.gaussian_features]
             mu = self.theta[:, np.newaxis]
-            s = self.sigma[:, np.newaxis]
-            s = s + self.epsilon
+            s = self.sigma[:, np.newaxis] + self.epsilon
 
             # For every y_class and feature,
             # take values of x's from the samples 
