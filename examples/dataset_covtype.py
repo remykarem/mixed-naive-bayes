@@ -1,13 +1,13 @@
-"""
-Example script demonstrating use of MixedNB using 
-the covertype dataset provided by sklearn
-"""
+# ## Mixed Naive Bayes with covertype dataset
+# ### using a combination of categorical and gaussian naive bayes
 
+# Load the required modules
 import numpy as np
 from sklearn.datasets import fetch_covtype
 from sklearn.naive_bayes import GaussianNB
 from mixed_naive_bayes import MixedNB
 
+# Fetch the dataset
 dataset = fetch_covtype()
 X_raw = dataset['data']
 y_raw = dataset['target']
@@ -31,15 +31,18 @@ y = y_raw-1
 del X_raw, y_raw
 del quant, soil, wild
 
-# Classify
+# Assume features `10` and `11` are multinoulli (categorical) 
+# and the rest Gaussian
 clf = MixedNB([10,11])
 clf.fit(X,y)
 print(f"MixedNB (C+G): {clf.score(X,y)}")
 
+# Assume all features are Gaussian (using our library)
 clf = MixedNB()
 clf.fit(X,y)
 print(f"MixedNB (G)  : {clf.score(X,y)}")
 
+# Assume all features are Gaussian (using `sklearn`'s library)
 clf = GaussianNB()
 clf.fit(X,y)
 print(f"GaussianNB   : {clf.score(X,y)}")
