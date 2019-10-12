@@ -1,41 +1,31 @@
-from sklearn.datasets import load_iris, load_digits, load_wine, \
-    load_breast_cancer, fetch_california_housing, fetch_covtype
+"""
+Run benchmarks on toy datasets provided by sklearn. 
+This is to ensure our implementation of Gaussian Naive 
+Bayes is the same as sklearn's.
+"""
+
+from sklearn.datasets import load_iris, load_digits, \
+    load_wine, load_breast_cancer
 from sklearn.naive_bayes import GaussianNB
-from mixed_naive_bayes import MixedNB, load_example
-import numpy as np
+from mixed_naive_bayes import MixedNB
 
-# for load_data in [load_iris, load_digits, load_wine, 
-#     load_breast_cancer]:
+for load_data in [load_iris, load_digits, load_wine,
+                  load_breast_cancer]:
 
-#     dataset = load_data()
+    print(f"--- {''.join(load_data.__name__.split('_')[1:])} ---")
 
-#     X = dataset['data']
-#     y = dataset['target']
+    dataset = load_data()
 
-#     gaussian_nb = GaussianNB()
-#     gaussian_nb.fit(X,y)
-#     gaussian_nb_pred = gaussian_nb.predict(X)
+    X = dataset['data']
+    y = dataset['target']
 
-#     mixed_nb = MixedNB()
-#     mixed_nb.fit(X,y)
-#     mixed_nb_pred = mixed_nb.predict(X)
+    gaussian_nb = GaussianNB()
+    gaussian_nb.fit(X, y)
+    gaussian_nb_pred = gaussian_nb.predict(X)
 
-#     print(gaussian_nb.score(X,y))
-#     print(mixed_nb.score(X,y))
+    mixed_nb = MixedNB()
+    mixed_nb.fit(X, y)
+    mixed_nb_pred = mixed_nb.predict(X)
 
-print("--------------------------------------")
-
-dataset = fetch_covtype()
-
-X = dataset['data']
-y = dataset['target']
-
-# mixed_nb = GaussianNB()
-mixed_nb = MixedNB(categorical_features=list(range(54)))
-mixed_nb.fit(X,y)
-
-print(mixed_nb.score(X,y))
-
-
-
-# mixed_nb.fit(X[:1400],y[:1400],[0,1,9,17,24,25,32,33,40,41,48,49,57],np.max(X[:,[0,1,9,17,24,25,32,33,40,41,48,49,57]], axis=0)+1)
+    print(f"GaussianNB: {gaussian_nb.score(X,y)}")
+    print(f"MixedNB   : {mixed_nb.score(X,y)}")

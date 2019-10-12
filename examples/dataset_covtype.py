@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.datasets import fetch_covtype
 from mixed_naive_bayes import MixedNB
 
