@@ -32,6 +32,11 @@ def test_input_wrong_shape():
     with pytest.raises(ValueError):
         clf.fit([0,1,2], [0,1])
 
+def test_input_not_encoded():
+    clf = MixedNB(categorical_features='all')
+    with pytest.raises(ValueError):
+        clf.fit([[1,2],[2,2],[3,3]], [0,1,0])
+
 def test_continuous_data_iris():
     iris = load_iris()
     X = iris['data']

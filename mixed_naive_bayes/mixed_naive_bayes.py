@@ -150,7 +150,7 @@ class MixedNB():
         if self.categorical_features is None:
             self.categorical_features = []
         elif self.categorical_features is 'all':
-            self.categorical_features = np.arange(0,self.num_features+1)
+            self.categorical_features = np.arange(0,self.num_features)
 
         # Get the index columns of the discrete data and continuous data
         self.categorical_features = np.array(self.categorical_features).astype(int)
@@ -397,13 +397,13 @@ def _validate_training_data(X_raw, y_raw, categorical_features):
 
     return X, y
 
-#     if categorical_features is not None:
-#         for feature_no in categorical_features:
-#             uniques = np.unique(X[:, feature_no]).astype(int)
-#             if not np.array_equal(uniques, list(range(np.max(uniques)+1))):
-#                 raise ValueError(f"Expected feature no. {feature_no} to have " +
-#                                  f"{list(range(np.max(uniques)))} " +
-#                                  f"unique values, but got {uniques} instead.")
+    # if categorical_features is not None:
+    #     for feature_no in categorical_features:
+    #         uniques = np.unique(X[:, feature_no]).astype(int)
+    #         if not np.array_equal(uniques, list(range(np.max(uniques)+1))):
+    #             raise ValueError(f"Expected feature no. {feature_no} to have " +
+    #                              f"{list(range(np.max(uniques)))} " +
+    #                              f"unique values, but got {uniques} instead.")
 
 
 def load_example():
