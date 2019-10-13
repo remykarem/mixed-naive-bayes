@@ -143,19 +143,21 @@ The `pytest` library is not needed unless you want to perform testing.
 
 ## Performance (Accuracy)
 
-Measures the accuracy of (1) using categorical data and (2) my Gaussian implementation.
+Performance across datasets on classification tasks.
 
-Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (G+C) |
+Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (C+G) |
 ------- | ---------- | ----------- | ----------- | ------------- |
-Iris    | 0.960      | 0.960       | -           | - |
-Digits  | 0.858      | 0.858       | **0.961**   | - |
-Wine    | 0.989      | 0.989       | -           | - |
-Cancer  | 0.942      | 0.942       | -           | - |
-covtype | 0.616      | 0.616       |             | **0.657** |
+[Iris plants](https://scikit-learn.org/stable/datasets/index.html#iris-plants-dataset)    | 0.960      | 0.960       | -           | - |
+[Handwritten digits](https://scikit-learn.org/stable/datasets/index.html#optical-recognition-of-handwritten-digits-dataset)  | 0.858      | 0.858       | **0.961**   | - |
+[Wine](https://scikit-learn.org/stable/datasets/index.html#wine-recognition-dataset)    | 0.989      | 0.989       | -           | - |
+[Breast cancer](https://scikit-learn.org/stable/datasets/index.html#breast-cancer-wisconsin-diagnostic-dataset)  | 0.942      | 0.942       | -           | - |
+[Forest covertypes](https://scikit-learn.org/stable/datasets/index.html#forest-covertypes) | 0.616      | 0.616       |             | **0.657** |
 
-G - Gaussian only
-C - categorical only
-G+C - Gaussian and categorical
+G - Assume all features follow Gaussian distribution
+
+C - Assume all features follow categorical distribution
+
+C+G - Assume some features follow categorical and some Gaussian
 
 ## Performance (Speed)
 
