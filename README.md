@@ -35,7 +35,7 @@ pip install mixed-naive-bayes
 or
 
 ```bash
-pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed_naive_bayes
+pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed-naive-bayes
 ```
 
 ## Quick starts
