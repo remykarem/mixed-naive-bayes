@@ -4,11 +4,11 @@ Naive Bayes classifiers are a set of supervised learning algorithms based on app
 
 This module implements **Categorical** (Multinoulli) and **Gaussian** naive Bayes algorithms (hence *mixed naive Bayes*). This means that we are not confined to the assumption that features (given their respective *y*'s) follow the Gaussian distribution, but also the categorical distribution. Hence it is natural that the continuous data be attributed to the Gaussian and the categorical data (nominal or ordinal) be attributed the the categorical distribution.
 
-The motivation for writing this library is that [scikit-learn](https://scikit-learn.org/) does not have an implementation for mixed type of naive bayes. They have one for `CategoricalNB` [here](https://github.com/scikit-learn/scikit-learn/blob/86aea9915/sklearn/naive_bayes.py#L1021) but it's still pending.
+The motivation for writing this library is that [scikit-learn](https://scikit-learn.org/) does not have an implementation for mixed type of naive bayes. They have one for `CategoricalNB` [here](https://github.com/scikit-learn/scikit-learn/blob/86aea9915/sklearn/naive_bayes.py#L1021) but it's still in its infancy.
 
 I like `scikit-learn`'s APIs  😍 so if you use it a lot, you'll find that it's easy to get started started with this library (there's `.fit()`, `.predict()`, `.predict_proba()` and `.score()`).
 
-I've written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for naive bayes if you need to understand a bit more on the math.
+I've also written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for naive bayes if you need to understand a bit more on the math.
 
 ## Contents
 
@@ -42,16 +42,15 @@ pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed-naive-b
 
 ### Example 1: Discrete and continuous data
 
-Below is an example of a dataset with discrete (first 2 columns) and continuous data (last 2). Specify the indices of the features which are to follow the categorical distribution (columns `0` and `1`). Then fit and
-predict as per usual.
+Below is an example of a dataset with discrete (first 2 columns) and continuous data (last 2). Specify the indices of the features which are to follow the categorical distribution (columns `0` and `1`). Then fit and predict as per usual.
 
 ```python
 from mixed_naive_bayes import MixedNB
-X = [[0, 0, 180, 75],
-     [1, 1, 165, 61],
-     [2, 1, 166, 60],
-     [1, 1, 173, 68],
-     [0, 2, 178, 71]]
+X = [[0, 0, 180.9, 75.0],
+     [1, 1, 165.2, 61.5],
+     [2, 1, 166.3, 60.3],
+     [1, 1, 173.0, 68.2],
+     [0, 2, 178.4, 71.0]]
 y = [0, 0, 1, 1, 0]
 clf = MixedNB(categorical_features=[0,1])
 clf.fit(X,y)
@@ -62,23 +61,21 @@ clf.predict(X)
 
 ### Example 2: Discrete and continuous data
 
-Below is an example of a dataset with discrete (first 2 columns) and continuous data (last 2). Specify the indices of the features which are to follow the categorical distribution (columns `0` and `1`). Then fit and
-predict as per usual.
-
-If we decide to make the 3rd column as a discrete feature, we can use sklearn's [`LabelEncoder()`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html) preprocessing module.
+Below is a similar same dataset. However, for this dataset we assume a categorical distribution on the first 3 features, and a Gaussian distribution on the last feature. Feature 3 however has not been label-encoded. We can use sklearn's [`LabelEncoder()`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html) preprocessing module to fix this.
 
 ```python
 from sklearn.preprocessing import LabelEncoder
-X = [[0, 0, 180, 75],
-     [1, 1, 165, 61],
-     [2, 1, 166, 60],
-     [1, 1, 173, 68],
-     [0, 2, 178, 71]]
+X = [[0, 0, 180, 75.0],
+     [1, 1, 165, 61.5],
+     [2, 1, 166, 60.3],
+     [1, 1, 173, 68.2],
+     [0, 2, 178, 71.0]]
 y = [0, 0, 1, 1, 0]
 X = np.array(X)
 y = np.array(y)
 label_encoder = LabelEncoder()
 X[:,2] = label_encoder.fit_transform(X[:,2])
+print(X)
 # array([[ 0,  0,  4, 75],
 #        [ 1,  1,  0, 61],
 #        [ 2,  1,  1, 60],
@@ -86,9 +83,11 @@ X[:,2] = label_encoder.fit_transform(X[:,2])
 #        [ 0,  2,  3, 71]])
 ```
 
+Then fit and predict as usual, specifying `[0,1,2]` as the indices that we assume categorical distribution.
+
 ```python
 from mixed_naive_bayes import MixedNB
-clf = MixedNB(categorical_features=[0,1])
+clf = MixedNB(categorical_features=[0,1,2])
 clf.fit(X,y)
 clf.predict(X)
 ```
@@ -114,7 +113,7 @@ clf.predict(X)
 
 ### Example 4: Continuous data only
 
-If all columns are to be treated as continuous, then leave the constructor blank.
+If all features are assumed to follow Gaussian distribution, then leave the constructor blank.
 
 ```python
 from mixed_naive_bayes import MixedNB
