@@ -32,7 +32,7 @@ I've written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for
 pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed_naive_bayes
 ```
 
-## Quick start
+## Quick starts
 
 ### Example 1: Discrete and continuous data
 
@@ -122,6 +122,10 @@ clf = MixedNB()
 clf.fit(X,y)
 clf.predict(X)
 ```
+
+### More examples
+
+See the `examples/` folder for more example notebooks or jump in to a notebook hosted at MyBinder [here](https://mybinder.org/v2/gh/remykarem/mixed-naive-bayes/master?filepath=%2Fexamples%2Fdataset_digits.ipynb).
 
 ## Requirements
 

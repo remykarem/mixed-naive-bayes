@@ -24,12 +24,12 @@ def test_input_param():
 
 def test_input_string_x():
     clf = MixedNB()
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         clf.fit([['X'],['y']], [0,1])
 
 def test_input_string_y():
     clf = MixedNB()
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         clf.fit([[2],[1]], [0,'1'])
 
 def test_input_wrong_dims():
@@ -37,7 +37,7 @@ def test_input_wrong_dims():
     with pytest.raises(ValueError):
         clf.fit([[0,1,2]], [0,1])
 
-def test_input_wrong_dims():
+def test_input_wrong_dims_2():
     clf = MixedNB()
     with pytest.raises(ValueError):
         clf.fit([[0,1,2]], [[0,1]])

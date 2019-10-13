@@ -178,6 +178,8 @@ class MixedNB():
         else:
             self.max_categories = np.array(self.max_categories).astype(int)
 
+        print(self.max_categories)
+
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
             self.theta = np.zeros((num_classes, len(self.gaussian_features)))
@@ -401,12 +403,12 @@ def _validate_training_data(X_raw, y_raw, categorical_features, max_categories):
             "No. of samples in X does not match no. of samples in y")
 
     if X.dtype not in ACCEPTABLE_TYPES:
-        raise ValueError("Expected X to contain only numerics, " +
+        raise TypeError("Expected X to contain only numerics, " +
                          f"but got type {X.dtype} instead. For categorical variables, " +
                          "encode your data using sklearn's LabelEncoder.")
 
     if y.dtype not in ACCEPTABLE_TYPES:
-        raise ValueError("Expected y to contain only numerics, " +
+        raise TypeError("Expected y to contain only numerics, " +
                          f"but got type {y.dtype} instead. For categorical variables, " +
                          "encode your data using sklearn's LabelEncoder.")
 
