@@ -64,6 +64,7 @@ clf.predict(X)
 Below is a similar dataset. However, for this dataset we assume a categorical distribution on the first 3 features, and a Gaussian distribution on the last feature. Feature 3 however has not been label-encoded. We can use sklearn's [`LabelEncoder()`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html) preprocessing module to fix this.
 
 ```python
+import numpy as np
 from sklearn.preprocessing import LabelEncoder
 X = [[0, 0, 180, 75.0],
      [1, 1, 165, 61.5],
