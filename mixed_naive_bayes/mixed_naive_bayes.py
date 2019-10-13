@@ -433,9 +433,11 @@ def _validate_training_data(X_raw, y_raw, categorical_features, max_categories):
                 uniques = np.unique(X[:, feature_no]).astype(int)
                 if not np.array_equal(uniques, np.arange(0, np.max(uniques)+1)):
                     raise ValueError(f"Expected feature no. {feature_no} to have " +
-                                     f"{np.arange(0,np.max(uniques)+1)} " +
+                                     f"{np.arange(0,np.max(uniques)+1)} as " +
                                      f"unique values, but got {uniques} instead. " +
-                                     "Encode your data using sklearn's LabelEncoder.")
+                                     "Encode your data using sklearn's LabelEncoder, " + 
+                                     "or specify the maximum no. of categories this " + 
+                                     "feature can take.")
 
     return X, y
 
