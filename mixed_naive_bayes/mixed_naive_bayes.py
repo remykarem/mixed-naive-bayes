@@ -429,7 +429,7 @@ def _validate_training_data(X_raw, y_raw, categorical_features, max_categories):
             if not np.array_equal(X[:, feature_no], X[:, feature_no].astype(int)):
                 warnings.warn(f"Feature no. {feature_no} is continuous data. " +
                               "Casting data to integer.")
-            if max_categories is not None:
+            if max_categories is None:
                 uniques = np.unique(X[:, feature_no]).astype(int)
                 if not np.array_equal(uniques, np.arange(0, np.max(uniques)+1)):
                     raise ValueError(f"Expected feature no. {feature_no} to have " +

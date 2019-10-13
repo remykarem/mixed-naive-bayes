@@ -135,10 +135,6 @@ def test_categorical_data_digits_all_negative():
     mixed_nb = MixedNB(categorical_features='all')
     with pytest.raises(ValueError):
         mixed_nb.fit(X,y)
-    mixed_nb_score = mixed_nb.score(X,y)
-
-    print(gaussian_nb_score)
-    print(mixed_nb_score)
     
 def test_categorical_data_digits_all():
     digits = load_digits()
@@ -165,7 +161,7 @@ def test_categorical_data_digits():
     gaussian_nb.fit(X,y)
     gaussian_nb_score = gaussian_nb.score(X,y)
 
-    mixed_nb = MixedNB(categorical_features='all')
+    mixed_nb = MixedNB(categorical_features='all', max_categories=np.repeat(17,64))
     mixed_nb.fit(X[:1440],y[:1440])
     mixed_nb_score = mixed_nb.score(X[:1440],y[:1440])
 
