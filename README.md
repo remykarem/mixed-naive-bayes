@@ -29,6 +29,12 @@ I've written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for
 ### via pip
 
 ```bash
+pip install mixed-naive-bayes
+```
+
+or
+
+```bash
 pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed_naive_bayes
 ```
 
