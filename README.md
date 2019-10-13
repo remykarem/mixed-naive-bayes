@@ -61,7 +61,7 @@ clf.predict(X)
 
 ### Example 2: Discrete and continuous data
 
-Below is a similar same dataset. However, for this dataset we assume a categorical distribution on the first 3 features, and a Gaussian distribution on the last feature. Feature 3 however has not been label-encoded. We can use sklearn's [`LabelEncoder()`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html) preprocessing module to fix this.
+Below is a similar dataset. However, for this dataset we assume a categorical distribution on the first 3 features, and a Gaussian distribution on the last feature. Feature 3 however has not been label-encoded. We can use sklearn's [`LabelEncoder()`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html) preprocessing module to fix this.
 
 ```python
 from sklearn.preprocessing import LabelEncoder
