@@ -152,7 +152,7 @@ Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (C+G) |
 [Handwritten digits](https://scikit-learn.org/stable/datasets/index.html#optical-recognition-of-handwritten-digits-dataset)  | 0.858      | 0.858       | **0.961**   | - |
 [Wine](https://scikit-learn.org/stable/datasets/index.html#wine-recognition-dataset)    | 0.989      | 0.989       | -           | - |
 [Breast cancer](https://scikit-learn.org/stable/datasets/index.html#breast-cancer-wisconsin-diagnostic-dataset)  | 0.942      | 0.942       | -           | - |
-[Forest covertypes](https://scikit-learn.org/stable/datasets/index.html#forest-covertypes) | 0.616      | 0.616       |             | **0.657** |
+[Forest covertypes](https://scikit-learn.org/stable/datasets/index.html#forest-covertypes) | 0.616      | 0.616       | -            | **0.657** |
 
 G - Assume all features follow Gaussian distribution
 
