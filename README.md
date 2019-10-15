@@ -6,7 +6,7 @@ This module implements **categorical** (multinoulli) and **Gaussian** naive Baye
 
 The motivation for writing this library is that [scikit-learn](https://scikit-learn.org/) does not have an implementation for mixed type of naive bayes. They have one for `CategoricalNB` [here](https://github.com/scikit-learn/scikit-learn/blob/86aea9915/sklearn/naive_bayes.py#L1021) but it's still in its infancy.
 
-I like `scikit-learn`'s APIs  😍 so if you use it a lot, you'll find that it's easy to get started started with this library (there's `.fit()`, `.predict()`, `.predict_proba()` and `.score()`).
+I like scikit-learn's APIs  😍 so if you use it a lot, you'll find that it's easy to get started started with this library. There's `fit()`, `predict()`, `predict_proba()` and `score()`.
 
 I've also written a tutorial [here](https://remykarem.github.io/blog/naive-bayes) for naive bayes if you need to understand a bit more on the math.
 
@@ -144,7 +144,7 @@ The `pytest` library is not needed unless you want to perform testing.
 
 ## Performance (Accuracy)
 
-Performance across datasets on classification tasks.
+Performance across sklearn's datasets on classification tasks.
 
 Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (C+G) |
 ------- | ---------- | ----------- | ----------- | ------------- |
@@ -154,11 +154,10 @@ Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (C+G) |
 [Breast cancer](https://scikit-learn.org/stable/datasets/index.html#breast-cancer-wisconsin-diagnostic-dataset)  | 0.942      | 0.942       | -           | - |
 [Forest covertypes](https://scikit-learn.org/stable/datasets/index.html#forest-covertypes) | 0.616      | 0.616       | -            | **0.657** |
 
-G - Assume all features follow Gaussian distribution
-
-C - Assume all features follow categorical distribution
-
-C+G - Assume some features follow categorical and some Gaussian
+- GaussianNB - sklearn's API for Gaussian Naive Bayes
+- MixedNB (G) - our API for Gaussian Naive Bayes
+- MixedNB (C) - our API for Categorical Naive Bayes
+- MixedNB (C+G) - our API for Naive Bayes where some features follow categorical distribution, and some features follow Gaussian
 
 ## Performance (Speed)
 
