@@ -13,7 +13,7 @@ I've also written a tutorial [here](https://remykarem.github.io/blog/naive-bayes
 ## Contents
 
 - [Installation](#installation)
-- [Quick start](#quick-start)
+- [Quick starts](#quick-starts)
 - [Requirements](#requirements)
 - [Performance (Accuracy)](#performance-accuracy)
 - [Performance (Speed)](#performance-speed)
@@ -22,7 +22,7 @@ I've also written a tutorial [here](https://remykarem.github.io/blog/naive-bayes
 - [To-Dos](#to-dos)
 - [References](#references)
 - [Related work](#related-work)
-- [Contributing ️❤️](#contributing)
+- [Contributing ❤️](#contributing)
 
 ## Installation
 
@@ -42,7 +42,7 @@ pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed-naive-b
 
 ### Example 1: Discrete and continuous data
 
-Below is an example of a dataset with discrete (first 2 columns) and continuous data (last 2). Specify the indices of the features which are to follow the categorical distribution (columns `0` and `1`). Then fit and predict as per usual.
+Below is an example of a dataset with discrete (first 2 columns) and continuous data (last 2). We assume that the discrete features follow a categorical distribution and the features with the continuous data follow a Gaussian distribution. Specify `categorical_features=[0,1]` then fit and predict as per usual.
 
 ```python
 from mixed_naive_bayes import MixedNB
@@ -57,7 +57,7 @@ clf.fit(X,y)
 clf.predict(X)
 ```
 
-**NOTE: The module expects that you treat the categorical data be label encoded accordingly. See the following example to see how.**
+**NOTE: The module expects that the categorical data be label-encoded accordingly. See the following example to see how.**
 
 ### Example 2: Discrete and continuous data
 
@@ -84,7 +84,7 @@ print(X)
 #        [ 0,  2,  3, 71]])
 ```
 
-Then fit and predict as usual, specifying `[0,1,2]` as the indices that we assume categorical distribution.
+Then fit and predict as usual, specifying `categorical_features=[0,1,2]` as the indices that we assume categorical distribution.
 
 ```python
 from mixed_naive_bayes import MixedNB
@@ -110,7 +110,7 @@ clf.fit(X,y)
 clf.predict(X)
 ```
 
-**NOTE: The module expects that you treat the categorical data be label encoded accordingly. See the previous example to see how.**
+**NOTE: The module expects that the categorical data be label-encoded accordingly. See the previous example to see how.**
 
 ### Example 4: Continuous data only
 
@@ -204,6 +204,6 @@ Possible features:
 - [Naive Bayes classifier for categorical and numerical data](https://github.com/wookieJ/naive-bayes)
 - [Generalised naive Bayes classifier](https://github.com/ashkonf/HybridNaiveBayes)
 
-## Contributing ️❤️
+## Contributing
 
 Please submit your pull requests, will appreciate it a lot ❤
