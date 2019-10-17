@@ -131,7 +131,7 @@ clf.predict(X)
 
 ### More examples
 
-See the `examples/` folder for more example notebooks or jump in to a notebook hosted at MyBinder [here](https://mybinder.org/v2/gh/remykarem/mixed-naive-bayes/master?filepath=%2Fexamples%2Fdataset_digits.ipynb).
+See the `examples/` folder for more example notebooks or jump into a notebook hosted at MyBinder [here](https://mybinder.org/v2/gh/remykarem/mixed-naive-bayes/master?filepath=%2Fexamples%2Fdataset_digits.ipynb).
 
 ## Requirements
 
@@ -197,7 +197,6 @@ Possible features:
 
 - [ ] Masking in NumPy
 - [ ] Support label encoding
-- [ ] Support missing data
 
 ## References
 
