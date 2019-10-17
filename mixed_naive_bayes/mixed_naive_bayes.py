@@ -178,7 +178,7 @@ class MixedNB():
         else:
             self.max_categories = np.array(self.max_categories).astype(int)
 
-        print(self.max_categories)
+        print('hhh')
 
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
