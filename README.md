@@ -173,12 +173,18 @@ I'm still writing more test cases, but in the meantime, you can run the followin
 pytest tests.py
 ```
 
+- Correctness
+- Accuracy against existing library (sklearn)
+- Input type checking
+- Example inputs
+
 ## API Documentation
 
 For more information on usage of the API, visit [here](https://remykarem.github.io/docs/mixed_naive_bayes.html). This was generated using pdoc3.
 
 ## To-Dos
 
+- [ ] Change to F-contiguous arrays?
 - [ ] Implement `predict_log_proba()`
 - [ ] Write more test cases
 - [ ] Performance (Speed)
