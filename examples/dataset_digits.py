@@ -5,7 +5,7 @@
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.naive_bayes import GaussianNB
-from mixed_naive_bayes import MixedNB, load_example
+from mixed_naive_bayes import MixedNB
 
 # Load the digits dataset
 digits = load_digits()
@@ -22,6 +22,7 @@ mixed_nb = MixedNB(categorical_features='all',
                    max_categories=np.repeat(17,64))
 mixed_nb.fit(X, y)
 mixed_nb_score = mixed_nb.score(X, y)
+
 
 print(gaussian_nb_score)
 print(mixed_nb_score)

@@ -144,7 +144,7 @@ The `pytest` library is not needed unless you want to perform testing.
 
 ## Performance (Accuracy)
 
-Performance across sklearn's datasets on classification tasks.
+Performance across sklearn's datasets on classification tasks. Run `python benchmarks.py`.
 
 Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (C+G) |
 ------- | ---------- | ----------- | ----------- | ------------- |

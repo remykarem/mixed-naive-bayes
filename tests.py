@@ -48,7 +48,6 @@ def test_input_y_not_encoded():
         clf.fit([[1,2],[2,2],[3,3]], [0,8,0])
 
 def test_input_x_not_encoded():
-    clf = MixedNB()
     pass
 
 def test_continuous_data_iris():
@@ -63,8 +62,6 @@ def test_continuous_data_iris():
     mixed_nb = MixedNB()
     mixed_nb.fit(X,y)
     mixed_nb_pred = mixed_nb.predict(X)
-    print(gaussian_nb.score(X,y))
-    print(mixed_nb.score(X,y))
     
     assert (mixed_nb_pred == gaussian_nb_pred).all()
 
@@ -81,9 +78,6 @@ def test_continuous_data_wine():
     mixed_nb.fit(X,y)
     mixed_nb_score = mixed_nb.score(X,y)
     
-    print(gaussian_nb.score(X,y))
-    print(mixed_nb.score(X,y))
-    
     assert np.isclose(gaussian_nb_score,mixed_nb_score)
     
 def test_continuous_data_digits():
@@ -98,9 +92,6 @@ def test_continuous_data_digits():
     mixed_nb = MixedNB()
     mixed_nb.fit(X,y)
     mixed_nb_score = mixed_nb.score(X,y)
-    
-    print(gaussian_nb.score(X,y))
-    print(mixed_nb.score(X,y))
     
     assert np.isclose(gaussian_nb_score,mixed_nb_score)
     
@@ -117,9 +108,6 @@ def test_continuous_data_breast_cancer():
     mixed_nb.fit(X,y)
     mixed_nb_score = mixed_nb.score(X,y)
     
-    print(gaussian_nb_score)
-    print(mixed_nb_score)
-    
     assert np.isclose(gaussian_nb_score,mixed_nb_score)
 
     
@@ -130,7 +118,6 @@ def test_categorical_data_digits_all_negative():
     
     gaussian_nb = GaussianNB()
     gaussian_nb.fit(X,y)
-    gaussian_nb_score = gaussian_nb.score(X,y)
 
     mixed_nb = MixedNB(categorical_features='all')
     with pytest.raises(ValueError):
@@ -143,14 +130,11 @@ def test_categorical_data_digits_all():
     
     gaussian_nb = GaussianNB()
     gaussian_nb.fit(X,y)
-    gaussian_nb_score = gaussian_nb.score(X,y)
+    gaussian_nb.score(X,y)
 
     mixed_nb = MixedNB(categorical_features='all', max_categories=np.repeat(17,64))
     mixed_nb.fit(X,y)
-    mixed_nb_score = mixed_nb.score(X,y)
-
-    print(gaussian_nb_score)
-    print(mixed_nb_score)
+    mixed_nb.score(X,y)
     
 def test_categorical_data_digits():
     digits = load_digits()
@@ -159,22 +143,16 @@ def test_categorical_data_digits():
     
     gaussian_nb = GaussianNB()
     gaussian_nb.fit(X,y)
-    gaussian_nb_score = gaussian_nb.score(X,y)
+    gaussian_nb.score(X,y)
 
     mixed_nb = MixedNB(categorical_features='all', max_categories=np.repeat(17,64))
     mixed_nb.fit(X[:1440],y[:1440])
-    mixed_nb_score = mixed_nb.score(X[:1440],y[:1440])
-
-    print(gaussian_nb_score)
-    print(mixed_nb_score)
-    
+    mixed_nb.score(X[:1440],y[:1440])
     
 def test_categorical_data_simple():
     X, y = load_example()
     
     mixed_nb = MixedNB([0,1])
     mixed_nb.fit(X,y)
-    mixed_nb_score = mixed_nb.score(X,y)
-    
-    print(mixed_nb_score)
+    mixed_nb.score(X,y)
     

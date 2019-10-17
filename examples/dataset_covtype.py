@@ -31,18 +31,20 @@ y = y_raw-1
 del X_raw, y_raw
 del quant, soil, wild
 
-# Assume features `10` and `11` are multinoulli (categorical) 
-# and the rest Gaussian
-clf = MixedNB([10,11])
+# Assume all features are Gaussian (using `sklearn`'s library)
+clf = GaussianNB()
 clf.fit(X,y)
-print(f"MixedNB (C+G): {clf.score(X,y)}")
 
 # Assume all features are Gaussian (using our library)
 clf = MixedNB()
 clf.fit(X,y)
-print(f"MixedNB (G)  : {clf.score(X,y)}")
 
-# Assume all features are Gaussian (using `sklearn`'s library)
-clf = GaussianNB()
+# Assume features `10` and `11` are multinoulli (categorical) 
+# and the rest Gaussian
+clf = MixedNB(categorical_features=[10,11])
 clf.fit(X,y)
+
+print(f"--- forest covertypes---")
 print(f"GaussianNB   : {clf.score(X,y)}")
+print(f"MixedNB (G)  : {clf.score(X,y)}")
+print(f"MixedNB (C+G): {clf.score(X,y)}")

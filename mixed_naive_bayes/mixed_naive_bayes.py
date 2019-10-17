@@ -178,8 +178,6 @@ class MixedNB():
         else:
             self.max_categories = np.array(self.max_categories).astype(int)
 
-        print('hhh')
-
         # Prepare empty arrays
         if self.gaussian_features.size != 0:
             self.theta = np.zeros((num_classes, len(self.gaussian_features)))
