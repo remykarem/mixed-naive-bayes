@@ -23,6 +23,5 @@ mixed_nb = MixedNB(categorical_features='all',
 mixed_nb.fit(X, y)
 mixed_nb_score = mixed_nb.score(X, y)
 
-
 print(gaussian_nb_score)
 print(mixed_nb_score)
