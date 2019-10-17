@@ -131,14 +131,15 @@ clf.predict(X)
 
 ### More examples
 
-See the `examples/` folder for more example notebooks or jump into a notebook hosted at MyBinder [here](https://mybinder.org/v2/gh/remykarem/mixed-naive-bayes/master?filepath=%2Fexamples%2Fdataset_digits.ipynb).
+See the `examples/` folder for more example notebooks or jump into a notebook hosted at MyBinder [here](https://mybinder.org/v2/gh/remykarem/mixed-naive-bayes/master?filepath=%2Fexamples%2Fdataset_digits.ipynb). Jupyter notebooks are generated using [`p2j`](https://github.com/remykarem/python2jupyter).
 
 ## Requirements
 
 - `Python>=3.6`
 - `numpy>=1.16.1`
+- `scikit-learn>=0.20.2`
 
-The `scikit-learn` library is used to import data as seen in the examples. Otherwise, the module itself does not require it.
+The `scikit-learn` library is used to only import data as seen in the examples. Otherwise, the module itself does not require it.
 
 The `pytest` library is not needed unless you want to perform testing.
 
@@ -184,10 +185,10 @@ For more information on usage of the API, visit [here](https://remykarem.github.
 
 ## To-Dos
 
+- [ ] Performance comparison
 - [ ] Change to F-contiguous arrays?
 - [ ] Implement `predict_log_proba()`
 - [ ] Write more test cases
-- [ ] Performance (Speed)
 - [X] Support refitting
 - [X] Regulariser for categorical distribution
 - [X] Variance smoothing for Gaussian distribution
