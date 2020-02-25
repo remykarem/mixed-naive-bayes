@@ -4,7 +4,7 @@ Naive Bayes classifiers are a set of supervised learning algorithms based on app
 
 This module implements **categorical** (multinoulli) and **Gaussian** naive Bayes algorithms (hence *mixed naive Bayes*). This means that we are not confined to the assumption that features (given their respective *y*'s) follow the Gaussian distribution, but also the categorical distribution. Hence it is natural that the continuous data be attributed to the Gaussian and the categorical data (nominal or ordinal) be attributed the the categorical distribution.
 
-The motivation for writing this library is that [scikit-learn](https://scikit-learn.org/) does not have an implementation for mixed type of naive bayes. They have one for `CategoricalNB` [here](https://github.com/scikit-learn/scikit-learn/blob/86aea9915/sklearn/naive_bayes.py#L1021) but it's still in its infancy.
+The motivation for writing this library is that [scikit-learn](https://scikit-learn.org/) at the point of writing this (Sep 2019) did not have an implementation for mixed type of naive Bayes. <s>They have one for `CategoricalNB` [here](https://github.com/scikit-learn/scikit-learn/blob/86aea9915/sklearn/naive_bayes.py#L1021) but it's still in its infancy.</s> scikit-learn now has [CategoricalNB](https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.CategoricalNB.html)!
 
 I like scikit-learn's APIs  😍 so if you use it a lot, you'll find that it's easy to get started started with this library. There's `fit()`, `predict()`, `predict_proba()` and `score()`.
 
