@@ -9,8 +9,7 @@ from mixed_naive_bayes import MixedNB
 
 # Fetch the dataset
 dataset = fetch_covtype()
-X_raw = dataset['data']
-y_raw = dataset['target']
+X_raw, y_raw = dataset['data'], dataset['target']
 
 # Grab the quantitative columns
 quant = X_raw[:,:10]
@@ -27,9 +26,6 @@ wild = wild[:,np.newaxis]
 # to make categories start from 0
 X = np.hstack([quant, soil, wild])
 y = y_raw-1
-
-del X_raw, y_raw
-del quant, soil, wild
 
 # Assume all features are Gaussian (using `sklearn`'s library)
 clf = GaussianNB()
