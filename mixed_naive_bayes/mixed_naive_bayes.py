@@ -153,7 +153,7 @@ class MixedNB():
             if len(self.priors) != num_classes:
                 raise ValueError(
                     'Number of priors must match number of classes.')
-            if np.isclose(self.priors.sum(), 1.0):
+            if not np.isclose(self.priors.sum(), 1.0):
                 raise ValueError("The sum of priors should be 1.")
             if (self.priors < 0).any():
                 raise ValueError('Priors must be non-negative.')
