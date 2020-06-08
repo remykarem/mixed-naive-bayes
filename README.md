@@ -171,7 +171,7 @@ The library is written in [NumPy](https://numpy.org/), so many operations are ve
 I'm still writing more test cases, but in the meantime, you can run the following:
 
 ```bash
-pytest tests.py
+pytest
 ```
 
 - Correctness
