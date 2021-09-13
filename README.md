@@ -149,11 +149,11 @@ Performance across sklearn's datasets on classification tasks. Run `python bench
 
 Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (C+G) |
 ------- | ---------- | ----------- | ----------- | ------------- |
-[Iris plants](https://scikit-learn.org/stable/datasets/index.html#iris-plants-dataset)    | 0.960      | 0.960       | -           | - |
-[Handwritten digits](https://scikit-learn.org/stable/datasets/index.html#optical-recognition-of-handwritten-digits-dataset)  | 0.858      | 0.858       | **0.961**   | - |
-[Wine](https://scikit-learn.org/stable/datasets/index.html#wine-recognition-dataset)    | 0.989      | 0.989       | -           | - |
-[Breast cancer](https://scikit-learn.org/stable/datasets/index.html#breast-cancer-wisconsin-diagnostic-dataset)  | 0.942      | 0.942       | -           | - |
-[Forest covertypes](https://scikit-learn.org/stable/datasets/index.html#forest-covertypes) | 0.616      | 0.616       | -            | **0.657** |
+[Iris plants](https://scikit-learn.org/stable/datasets/toy_dataset.html#iris-plants-dataset)    | 0.960      | 0.960       | -           | - |
+[Handwritten digits](https://scikit-learn.org/stable/datasets/toy_dataset.html#optical-recognition-of-handwritten-digits-dataset)  | 0.858      | 0.858       | **0.961**   | - |
+[Wine](https://scikit-learn.org/stable/datasets/toy_dataset.html#wine-recognition-dataset)    | 0.989      | 0.989       | -           | - |
+[Breast cancer](https://scikit-learn.org/stable/datasets/toy_dataset.html#breast-cancer-wisconsin-diagnostic-dataset)  | 0.942      | 0.942       | -           | - |
+[Forest covertypes](https://scikit-learn.org/stable/datasets/real_world.html#forest-covertypes) | 0.616      | 0.616       | -            | **0.657** |
 
 - GaussianNB - sklearn's API for Gaussian Naive Bayes
 - MixedNB (G) - our API for Gaussian Naive Bayes
