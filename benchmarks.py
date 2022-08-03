@@ -2,6 +2,8 @@
 Run benchmarks on toy datasets provided by sklearn. 
 This is to ensure our implementation of Gaussian Naive 
 Bayes is the same as sklearn's.
+
+Install scikit-learn to run this file
 """
 
 from sklearn.datasets import load_iris, load_digits, \
