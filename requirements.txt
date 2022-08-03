@@ -1,2 +1,2 @@
 git+https://github.com/remykarem/mixed-naive-bayes.git#egg=mixed-naive-bayes
-numpy==1.22.0
+numpy==1.21.0
