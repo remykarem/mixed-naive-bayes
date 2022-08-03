@@ -14,12 +14,9 @@ I've also written a tutorial [here](https://remykarem.github.io/blog/naive-bayes
 
 - [Installation](#installation)
 - [Quick starts](#quick-starts)
-- [Requirements](#requirements)
-- [Performance (Accuracy)](#performance-accuracy)
-- [Performance (Speed)](#performance-speed)
+- [Benchmarks](#benchmarks)
 - [Tests](#tests)
 - [API Documentation](#api-documentation)
-- [To-Dos](#to-dos)
 - [References](#references)
 - [Related work](#related-work)
 - [Contributing ❤️](#contributing)
@@ -32,7 +29,7 @@ I've also written a tutorial [here](https://remykarem.github.io/blog/naive-bayes
 pip install mixed-naive-bayes
 ```
 
-or
+or the nightly version
 
 ```bash
 pip install git+https://github.com/remykarem/mixed-naive-bayes#egg=mixed-naive-bayes
@@ -133,17 +130,7 @@ clf.predict(X)
 
 See the `examples/` folder for more example notebooks or jump into a notebook hosted at MyBinder [here](https://mybinder.org/v2/gh/remykarem/mixed-naive-bayes/master?filepath=%2Fexamples%2Fdataset_digits.ipynb). Jupyter notebooks are generated using [`p2j`](https://github.com/remykarem/python2jupyter).
 
-## Requirements
-
-- `Python>=3.6`
-- `numpy>=1.16.1`
-- `scikit-learn>=0.20.2`
-
-The `scikit-learn` library is used to only import data as seen in the examples. Otherwise, the module itself does not require it.
-
-The `pytest` library is not needed unless you want to perform testing.
-
-## Performance (Accuracy)
+## Benchmarks
 
 Performance across sklearn's datasets on classification tasks. Run `python benchmarks.py`.
 
@@ -160,44 +147,17 @@ Dataset | GaussianNB | MixedNB (G) | MixedNB (C) | MixedNB (C+G) |
 - MixedNB (C) - our API for Categorical Naive Bayes
 - MixedNB (C+G) - our API for Naive Bayes where some features follow categorical distribution, and some features follow Gaussian
 
-## Performance (Speed)
-
-The library is written in [NumPy](https://numpy.org/), so many operations are vectorised and faster than their for-loop counterparts. Fun fact: my first prototype (with many for-loops) took me 8 times slower than sklearn's 😱.
-
-(Still measuring)
-
 ## Tests
 
-I'm still writing more test cases, but in the meantime, you can run the following:
+To run tests, `pip install -r requirements-dev.txt`
 
 ```bash
 pytest
 ```
 
-- Correctness
-- Accuracy against existing library (sklearn)
-- Input type checking
-- Example inputs
-
 ## API Documentation
 
 For more information on usage of the API, visit [here](https://remykarem.github.io/docs/mixed_naive_bayes.html). This was generated using pdoc3.
-
-## To-Dos
-
-- [ ] Performance comparison
-- [ ] Change to F-contiguous arrays?
-- [ ] Implement `predict_log_proba()`
-- [ ] Write more test cases
-- [X] Support refitting
-- [X] Regulariser for categorical distribution
-- [X] Variance smoothing for Gaussian distribution
-- [X] Vectorised main operations using NumPy
-
-Possible features:
-
-- [ ] Masking in NumPy
-- [ ] Support label encoding
 
 ## References
 
