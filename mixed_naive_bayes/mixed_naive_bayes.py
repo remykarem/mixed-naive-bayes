@@ -272,8 +272,7 @@ class MixedNB():
         elif self.categorical_features.size != 0:
             finals = p * self.priors
 
-        normalised = finals.T/(np.sum(finals, axis=1) + 1e-6)
-        normalised = np.moveaxis(normalised, [0, 1], [1, 0])
+        normalised = finals/finals.sum(axis=1, keepdims=True)
 
         return normalised
 
