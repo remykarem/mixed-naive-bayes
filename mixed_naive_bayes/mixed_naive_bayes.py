@@ -16,7 +16,7 @@ import numpy as np
 _ALPHA_MIN = 1e-10
 
 
-class MixedNB():
+class MixedNB:
     """
     Naive Bayes classifier for Categorical and Gaussian models.
 
@@ -160,7 +160,7 @@ class MixedNB():
 
         if self.categorical_features is None:
             self.categorical_features = []
-        elif self.categorical_features is 'all':
+        elif self.categorical_features == 'all':
             self.categorical_features = np.arange(0, self.num_features)
 
         # Get the index columns of the discrete data and continuous data
@@ -344,7 +344,7 @@ class NotFittedError(Exception):
 def _validate_test_data(X, num_features):
     X = np.array(X)
 
-    if X.ndim is not 2:
+    if X.ndim != 2:
         raise ValueError("Bad input shape of X_test. " +
                          f"Expected an array of dim 2 but got dim {X.ndim} instead.")
 
@@ -386,11 +386,11 @@ def _validate_training_data(X_raw, y_raw, categorical_features, max_categories):
     X = np.array(X_raw)
     y = np.array(y_raw)
 
-    if X.ndim is not 2:
+    if X.ndim != 2:
         raise ValueError("Bad input shape of X. " +
                          f"Expected 2D array, but got {X.ndim}D instead. " +
                          "Reshape your data accordingly.")
-    if y.ndim is not 1:
+    if y.ndim != 1:
         raise ValueError("Bad input shape of y. " +
                          f"Expected 1D array, but got {y.ndim}D instead. " +
                          "Reshape your data accordingly.")
@@ -410,7 +410,7 @@ def _validate_training_data(X_raw, y_raw, categorical_features, max_categories):
                          "encode your data using sklearn's LabelEncoder.")
 
     y_classes = np.unique(y)
-    if y_classes.size is 1:
+    if y_classes.size == 1:
         raise ValueError(
             "Found only 1 class in y. There's nothing to classify here!")
 
@@ -420,7 +420,7 @@ def _validate_training_data(X_raw, y_raw, categorical_features, max_categories):
                          "Encode your data using sklearn's LabelEncoder.")
 
     if categorical_features is not None:
-        if categorical_features is 'all':
+        if categorical_features == 'all':
             categorical_features = np.arange(0, X.shape[1])
         for feature_no in categorical_features:
             if not np.array_equal(X[:, feature_no], X[:, feature_no].astype(int)):
