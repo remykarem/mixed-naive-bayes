@@ -1,3 +1,4 @@
+git+https://github.com/remykarem/mixed-naive-bayes.git#egg=mixed-naive-bayes
 pytest==7.1.2
 scikit-learn==0.20.2
 sphinx
