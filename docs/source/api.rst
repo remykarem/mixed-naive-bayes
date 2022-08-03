@@ -6,4 +6,4 @@
 API
 ===
 
-.. autoclass:: mixed_naive_bayes.mixed_naive_bayes.MixedNB
+.. autoclass:: mixed_naive_bayes.MixedNB
