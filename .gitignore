@@ -8,3 +8,5 @@ build
 _build
 _static
 _templates
+.idea
+.ipynb_checkpoints
