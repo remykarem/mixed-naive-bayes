@@ -157,7 +157,7 @@ pytest
 
 ## API Documentation
 
-For more information on usage of the API, visit [here](https://remykarem.github.io/docs/mixed_naive_bayes.html). This was generated using pdoc3.
+For more information on usage of the API, visit [here](https://mixed-naive-bayes.readthedocs.io). This was generated using pdoc3.
 
 ## References
 
