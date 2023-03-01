@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="mixed-naive-bayes",
-    version="0.0.3",
+    version="0.0.4",
     author="Raimi bin Karim",
     author_email="raimi.bkarim@gmail.com",
     description="Categorical and Gaussian Naive Bayes",
@@ -19,5 +19,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',
-    install_requires=['numpy>=1.21.0']
+    install_requires=['numpy>=1.22.0']
 )
