@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "bin Karim"
+  given-names: "Raimi"
+title: "Mixed Naive Bayes"
+date-released: 2019-10-11
+url: "https://github.com/remykarem/mixed-naive-bayes"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "bin Karim"
+    given-names: "Raimi"
+  month: 10
+  journal: "https://github.com/remykarem/mixed-naive-bayes"
+  title: "Mixed Naive Bayes"
+  year: 2019
