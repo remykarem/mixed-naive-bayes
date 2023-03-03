@@ -172,17 +172,3 @@ For more information on usage of the API, visit [here](https://mixed-naive-bayes
 ## Contributing
 
 Please submit your pull requests, will appreciate it a lot ❤
-
----
-
-If you are using this library for your work, please cite us as follows:
-
-```
-@article{Mixed_Naive_Bayes,
-     author = {bin Karim, Raimi},
-     journal = {https://github.com/remykarem/mixed-naive-bayes},
-     month = {10},
-     title = {{Mixed Naive Bayes}},
-     year = {2019}
-}
-```
