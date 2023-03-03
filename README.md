@@ -177,6 +177,7 @@ Please submit your pull requests, will appreciate it a lot ❤
 
 If you are using this library for your work, please cite us as follows:
 
+```
 @article{Mixed_Naive_Bayes,
      author = {bin Karim, Raimi},
      journal = {https://github.com/remykarem/mixed-naive-bayes},
@@ -184,3 +185,4 @@ If you are using this library for your work, please cite us as follows:
      title = {{Mixed Naive Bayes}},
      year = {2019}
 }
+```
